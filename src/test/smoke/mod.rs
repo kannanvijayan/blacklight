@@ -1,0 +1,1 @@
+mod smoketest_project;

@@ -1,0 +1,69 @@
+
+# Test run outputs
+
+## Test on 2024-08-31
+
+**Generator code**
+```rust
+  bsh.define_entrypoint::<u32, _>("main", |cbb, id| {
+    cbb.add_expr_statement(id.clone());
+    let var_foo = cbb.add_var_decl_statement("foo", id.clone());
+    cbb.add_assignment_statement(var_foo, id);
+    cbb.add_bare_return_statement();
+  });
+```
+
+**Output**
+```
+Shader { _model: ShaderModel { _entrypoints: [EntryPointModel { _shared: Shared(EntryPointModelShared { _name: "main", _code_block: CodeBlockModel { _statements: [Expr(ExprStmtModel { _expression: Identifier(IdentifierExprModel { _name: "global_id" }) }), VarDecl(VarDeclStmtModel { _name: "foo", _expression: Identifier(IdentifierExprModel { _name: "global_id" }) }), Assign(AssignStmtModel { _name: "foo", _expression: Identifier(IdentifierExprModel { _name: "global_id" }) }), Return(ReturnStmtModel { _expression: None })] } }) }] } }
+```
+
+**Formatted output**
+```
+Shader {
+  _model: ShaderModel {
+    _entrypoints: [
+      EntryPointModel {
+        _shared: Shared(EntryPointModelShared {
+          _name: "main",
+          _code_block: CodeBlockModel {
+            _statements: [
+              Expr(ExprStmtModel {
+                _expression: Identifier(IdentifierExprModel {
+                  _name: "global_id"
+                })
+              }),
+              VarDecl(VarDeclStmtModel {
+                _name: "foo",
+                _expression: Identifier(IdentifierExprModel {
+                  _name: "global_id"
+                })
+              }),
+              Assign(AssignStmtModel {
+                _name: "foo",
+                _expression: Identifier(IdentifierExprModel {
+                  _name: "global_id"
+                })
+              }),
+              Return(ReturnStmtModel {
+                _expression: None
+              })
+            ]
+          }
+        })
+      }
+    ]
+  }
+}
+```
+
+**Expected generated code**
+
+```wgsl
+fn main(global_id: u32) {
+  global_id;
+  let foo = global_id;
+  foo = global_id;
+  return;
+}
+```
