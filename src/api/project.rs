@@ -23,7 +23,7 @@ impl Project {
   /** Define a new shader module within this project. */
   pub fn define_shader<'pr, DFN>(&'pr self, definer_fn: DFN)
     -> Shader
-  where DFN: FnOnce(&mut ShaderBuilder<'pr>)
+  where DFN: for <'sh> FnOnce(&mut ShaderBuilder<'sh, 'pr>)
   {
     let mut shader_builder = ShaderBuilder::new(self);
     definer_fn(&mut shader_builder);

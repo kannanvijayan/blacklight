@@ -2,10 +2,15 @@ use std::marker::PhantomData;
 use crate::{
   api::{
     builder::{ ExprHandle, LvalueHandle },
-    data_type::{ ShExprDataType, ShProcResultType, ShVarDataType }
+    data_type::{
+      ShExprDataType,
+      ShLiteralDataType,
+      ShProcResultType,
+      ShVarDataType,
+    }
   },
   model::{
-    AssignStmtModel, CodeBlockModel, ExprStmtModel, ReturnStmtModel, StatementModel, VarDeclStmtModel
+    AssignStmtModel, CodeBlockModel, ExprStmtModel, ExpressionModel, IfElseStmtModel, LiteralExprModel, ReturnStmtModel, StatementModel, VarDeclStmtModel
   },
 };
 
@@ -43,7 +48,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * lifetime constriant `cb`.
    */
   pub fn add_expr_statement<DT>(&mut self, expr: ExprHandle<'cb, DT>)
-    where DT: ShExprDataType
+    where DT: ShExprDataType,
   {
     let expr_stmt_model = ExprStmtModel::new(expr.model);
     self.statements.push(StatementModel::Expr(expr_stmt_model));
@@ -89,13 +94,65 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * Add a new assignment statement.
    */
   pub fn add_assignment_statement<DT>(&mut self,
-    lvalue: LvalueHandle<'cb, DT>,
+    lvalue: &LvalueHandle<'cb, DT>,
     expr: ExprHandle<'cb, DT>,
   )
     where DT: ShVarDataType
   {
     let assign_stmt_model = AssignStmtModel::new(lvalue.name.clone(), expr.model);
     self.statements.push(StatementModel::Assign(assign_stmt_model));
+  }
+
+  /**
+   * Add a new if-else statement.
+   */
+  pub fn add_if_else_statement<IfB, ElseB>(&mut self,
+    condition: ExprHandle<'cb, bool>,
+    if_builder: IfB,
+    else_builder: ElseB,
+  ) where
+    IfB: for <'if_cb> FnOnce(&mut CodeBlockBuilder<'if_cb, 'sh, ()>),
+    ElseB: for <'else_cb> FnOnce(&mut CodeBlockBuilder<'else_cb, 'sh, ()>),
+  {
+    let mut if_block_builder = CodeBlockBuilder::new();
+    if_builder(&mut if_block_builder);
+    let if_block = if_block_builder.build();
+
+    let mut else_block_builder = CodeBlockBuilder::new();
+    else_builder(&mut else_block_builder);
+    let else_block = else_block_builder.build();
+
+    let if_else_stmt =
+      IfElseStmtModel::new(condition.model, if_block, Some(else_block));
+    self.statements.push(StatementModel::IfElse(if_else_stmt));
+  }
+
+  /**
+   * Add a new if statement.
+   */
+  pub fn add_if_statement<IfB>(&mut self,
+    condition: ExprHandle<'cb, bool>,
+    if_builder: IfB,
+  ) where
+    IfB: FnOnce(&mut CodeBlockBuilder<'cb, 'sh, ()>)
+  {
+    let mut if_block_builder = CodeBlockBuilder::new();
+    if_builder(&mut if_block_builder);
+    let if_block = if_block_builder.build();
+
+    let if_else_stmt = IfElseStmtModel::new(condition.model, if_block, None);
+    self.statements.push(StatementModel::IfElse(if_else_stmt));
+  }
+
+  /**
+   * Create a new literal expression.
+   */
+  pub fn literal_expr<DT>(&self, value: DT) -> ExprHandle<'cb, DT>
+    where DT: ShLiteralDataType
+  {
+    let literal_value = value.to_sh_literal_data_value();
+    let literal_expr_model = LiteralExprModel::new(literal_value);
+    ExprHandle::new(ExpressionModel::Literal(literal_expr_model))
   }
 }
 

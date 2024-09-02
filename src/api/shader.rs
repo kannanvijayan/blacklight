@@ -9,7 +9,9 @@ pub struct Shader {
 }
 impl Shader {
   /** Create a new empty shader. */
-  pub(crate) fn new(model: ShaderModel) -> Self {
+  pub(crate) fn new(
+    model: ShaderModel,
+  ) -> Self {
     Shader { _model: model }
   }
 }

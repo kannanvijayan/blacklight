@@ -21,7 +21,7 @@ impl<'a, DT: ShVarDataType> LvalueHandle<'a, DT> {
   }
 
   /** Convert the LvalueHandle to an ExprHandle to use as a read expression. */
-  pub fn expr(&self) -> ExprHandle<'a, DT> {
+  pub fn read(&self) -> ExprHandle<'a, DT> {
     let identifier_expr_model = IdentifierExprModel::new(self.name.clone());
     ExprHandle::new(ExpressionModel::Identifier(identifier_expr_model))
   }

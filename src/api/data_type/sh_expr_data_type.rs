@@ -5,6 +5,9 @@
 pub trait ShExprDataType: 'static + Sized {
 }
 
+impl ShExprDataType for bool {
+}
+
 impl ShExprDataType for i32 {
 }
 impl ShExprDataType for [i32; 2] {

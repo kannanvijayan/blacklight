@@ -1,4 +1,4 @@
-use crate::model::ExpressionModel;
+use crate::model::{ CodeBlockModel, ExpressionModel };
 
 /**
  * Represents a statement in a shader code block.
@@ -7,6 +7,7 @@ use crate::model::ExpressionModel;
 pub(crate) enum StatementModel {
   VarDecl(VarDeclStmtModel),
   Assign(AssignStmtModel),
+  IfElse(IfElseStmtModel),
   Expr(ExprStmtModel),
   Return(ReturnStmtModel),
 }
@@ -44,6 +45,35 @@ impl AssignStmtModel {
   /** Create a new assignment statement. */
   pub(crate) fn new(name: String, expression: ExpressionModel) -> Self {
     AssignStmtModel { _name: name, _expression: expression }
+  }
+}
+
+/**
+ * Represents an if-else statement.
+ */
+#[derive(Clone, Debug)]
+pub(crate) struct IfElseStmtModel {
+  // The condition expression.
+  _condition: ExpressionModel,
+
+  // The code block to execute if the condition is true.
+  _if_block: CodeBlockModel,
+
+  // The code block to execute if the condition is false.
+  _else_block: Option<CodeBlockModel>,
+}
+impl IfElseStmtModel {
+  /** Create a new if-else statement. */
+  pub(crate) fn new(
+    condition: ExpressionModel,
+    if_block: CodeBlockModel,
+    else_block: Option<CodeBlockModel>,
+  ) -> Self {
+    IfElseStmtModel {
+      _condition: condition,
+      _if_block: if_block,
+      _else_block: else_block,
+    }
   }
 }
 
