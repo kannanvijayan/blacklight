@@ -2,7 +2,7 @@ use wgpu;
 use crate::api::{
   Function,
   Shader,
-  data_type::{ShArgTupleDataType, ShProcResultType},
+  data_type::{ShArgTupleDataType, ProcResultType},
   builder::ShaderBuilder,
 };
 
@@ -32,7 +32,7 @@ impl Project {
 
   /** Define a function within the project. */
   pub fn define_function<ReturnT, ArgsT>(&self) -> Function<ReturnT, ArgsT>
-    where ReturnT: ShProcResultType,
+    where ReturnT: ProcResultType,
           ArgsT: ShArgTupleDataType,
   {
     unimplemented!("Project::define_function")

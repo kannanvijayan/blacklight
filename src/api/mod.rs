@@ -5,6 +5,7 @@ mod shader;
 
 pub mod data_type;
 pub mod builder;
+pub mod handle;
 pub use self::{
   entry_point::EntryPoint,
   function::Function,

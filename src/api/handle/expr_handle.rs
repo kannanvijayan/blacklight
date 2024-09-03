@@ -1,17 +1,17 @@
 use std::marker::PhantomData;
 use crate::{
-  api::data_type::ShExprDataType,
+  api::data_type::ExprDataType,
   model::{CmpOp, CmpOpExprModel, ExpressionModel},
 };
 
 /**
  * A typed, lifetime-aware handle to an expression within a shader.
  */
-pub struct ExprHandle<'cb, DT: ShExprDataType> {
+pub struct ExprHandle<'cb, DT: ExprDataType> {
   pub(crate) model: ExpressionModel,
   _phantom: PhantomData<&'cb DT>,
 }
-impl<'cb, DT: ShExprDataType> ExprHandle<'cb, DT> {
+impl<'cb, DT: ExprDataType> ExprHandle<'cb, DT> {
   /** Create a new expression handle for the given expression model. */
   pub(crate) fn new(model: ExpressionModel) -> Self {
     ExprHandle { model, _phantom: PhantomData }
@@ -55,7 +55,7 @@ impl<'cb, DT: ShExprDataType> ExprHandle<'cb, DT> {
     self.cmp(other, CmpOp::Ge)
   }
 }
-impl<'cb, DT: ShExprDataType> Clone for ExprHandle<'cb, DT> {
+impl<'cb, DT: ExprDataType> Clone for ExprHandle<'cb, DT> {
   fn clone(&self) -> Self {
     ExprHandle { model: self.model.clone(), _phantom: PhantomData }
   }

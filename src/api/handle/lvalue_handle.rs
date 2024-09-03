@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 use crate::{
   api::{
-    builder::ExprHandle,
-    data_type::ShVarDataType,
+    handle::ExprHandle,
+    data_type::VarDataType,
   },
   model::{ ExpressionModel, IdentifierExprModel },
 };
@@ -10,11 +10,11 @@ use crate::{
 /**
  * A handle identifying an lvalue within an active shader declaration.
  */
-pub struct LvalueHandle<'a, DT: ShVarDataType> {
+pub struct LvalueHandle<'a, DT: VarDataType> {
   pub(crate) name: String,
   _phantom: PhantomData<&'a DT>,
 }
-impl<'a, DT: ShVarDataType> LvalueHandle<'a, DT> {
+impl<'a, DT: VarDataType> LvalueHandle<'a, DT> {
   /** Create a new lvalue handle for the given name. */
   pub(crate) fn new(name: String) -> Self {
     LvalueHandle { name, _phantom: PhantomData }
@@ -26,7 +26,7 @@ impl<'a, DT: ShVarDataType> LvalueHandle<'a, DT> {
     ExprHandle::new(ExpressionModel::Identifier(identifier_expr_model))
   }
 }
-impl<'a, DT: ShVarDataType> Clone for LvalueHandle<'a, DT> {
+impl<'a, DT: VarDataType> Clone for LvalueHandle<'a, DT> {
   fn clone(&self) -> Self {
     LvalueHandle { name: self.name.clone(), _phantom: PhantomData }
   }

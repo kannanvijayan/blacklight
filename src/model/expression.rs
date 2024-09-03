@@ -1,4 +1,4 @@
-use crate::api::data_type::ShLiteralDataValue;
+use crate::api::data_type::LiteralDataValue;
 
 /**
  * Represents an expression in a shader code block.
@@ -10,19 +10,6 @@ pub(crate) enum ExpressionModel {
   CmpOp(CmpOpExprModel),
 }
 impl ExpressionModel {
-  /** Create a new identifier expression. */
-  pub(crate) fn identifier<T: Into<String>>(name: T) -> Self {
-    Self::Identifier(IdentifierExprModel::new(name.into()))
-  }
-
-  /** Create a new comparison operation expression. */
-  pub(crate) fn cmp_op(
-    lhs: ExpressionModel,
-    rhs: ExpressionModel,
-    op: CmpOp
-  ) -> Self {
-    Self::CmpOp(CmpOpExprModel::new(lhs, rhs, op))
-  }
 }
 impl From<IdentifierExprModel> for ExpressionModel {
   fn from(expr: IdentifierExprModel) -> Self {
@@ -34,10 +21,10 @@ impl From<IdentifierExprModel> for ExpressionModel {
  * Represents a literal expression.
  */
 #[derive(Clone, Debug)]
-pub(crate) struct LiteralExprModel(pub(crate) ShLiteralDataValue);
+pub(crate) struct LiteralExprModel(pub(crate) LiteralDataValue);
 impl LiteralExprModel {
   /** Create a new literal expression. */
-  pub(crate) fn new(value: ShLiteralDataValue) -> Self {
+  pub(crate) fn new(value: LiteralDataValue) -> Self {
     LiteralExprModel(value)
   }
 }

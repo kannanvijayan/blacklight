@@ -1,22 +1,22 @@
 
-mod sh_arg_data_type;
-mod sh_buffer_data_type;
-mod sh_ep_arg_data_type;
-mod sh_expr_data_type;
-mod sh_literal_data_type;
-mod sh_proc_result_type;
-mod sh_var_data_type;
+mod arg_data_type;
+mod buffer_data_type;
+mod ep_arg_data_type;
+mod expr_data_type;
+mod literal_data_type;
+mod proc_result_type;
+mod var_data_type;
 
 pub use self::{
-  sh_arg_data_type::{ ShArgDataType, ShArgTupleDataType },
-  sh_buffer_data_type::{
-    ShBufferDataType,
-    ShBufferDataValue,
-    ShBufferDataTypeRepr,
+  arg_data_type::{ ArgDataType, ShArgTupleDataType },
+  buffer_data_type::{
+    BufferDataType,
+    BufferDataValue,
+    BufferDataTypeRepr,
   },
-  sh_ep_arg_data_type::ShEpArgDataType,
-  sh_expr_data_type::ShExprDataType,
-  sh_literal_data_type::{ ShLiteralDataType, ShLiteralDataValue },
-  sh_proc_result_type::ShProcResultType,
-  sh_var_data_type::ShVarDataType,
+  ep_arg_data_type::EntryPointArgDataType,
+  expr_data_type::ExprDataType,
+  literal_data_type::{ LiteralDataType, LiteralDataValue },
+  proc_result_type::ProcResultType,
+  var_data_type::VarDataType,
 };

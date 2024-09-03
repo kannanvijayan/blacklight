@@ -1,16 +1,19 @@
 use std::marker::PhantomData;
 use crate::{
   api::{
-    builder::{ ExprHandle, LvalueHandle },
-    data_type::{
-      ShExprDataType,
-      ShLiteralDataType,
-      ShProcResultType,
-      ShVarDataType,
-    }
+    handle::{ ExprHandle, LvalueHandle },
+    data_type::{ ExprDataType, LiteralDataType, ProcResultType, VarDataType }
   },
   model::{
-    AssignStmtModel, CodeBlockModel, ExprStmtModel, ExpressionModel, IfElseStmtModel, LiteralExprModel, ReturnStmtModel, StatementModel, VarDeclStmtModel
+    AssignStmtModel,
+    CodeBlockModel,
+    ExprStmtModel,
+    ExpressionModel,
+    IfElseStmtModel,
+    LiteralExprModel,
+    ReturnStmtModel,
+    StatementModel,
+    VarDeclStmtModel,
   },
 };
 
@@ -19,13 +22,13 @@ use crate::{
  * A builder helper for defining shader entrypoints.
  */
 pub struct CodeBlockBuilder<'cb, 'sh: 'cb, ReturnT>
-  where ReturnT: ShProcResultType
+  where ReturnT: ProcResultType
 {
   statements: Vec<StatementModel>,
   _phantom: PhantomData<&'cb &'sh ReturnT>,
 }
 impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
-  where ReturnT: ShProcResultType
+  where ReturnT: ProcResultType
 {
   /** Create a new shader entrypoint builder for the given shader builder. */
   pub(crate) fn new() -> Self {
@@ -48,7 +51,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * lifetime constriant `cb`.
    */
   pub fn add_expr_statement<DT>(&mut self, expr: ExprHandle<'cb, DT>)
-    where DT: ShExprDataType,
+    where DT: ExprDataType,
   {
     let expr_stmt_model = ExprStmtModel::new(expr.model);
     self.statements.push(StatementModel::Expr(expr_stmt_model));
@@ -64,7 +67,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * lifetime constriant `cb`.
    */
   pub fn add_return_statement<DT>(&mut self, expr: ExprHandle<'cb, ReturnT>)
-    where ReturnT: ShExprDataType
+    where ReturnT: ExprDataType
   {
     let return_stmt_model = ReturnStmtModel::new(Some(expr.model));
     self.statements.push(StatementModel::Return(return_stmt_model));
@@ -83,7 +86,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     name: &str,
     expr: ExprHandle<'cb, DT>,
   ) -> LvalueHandle<'cb, DT>
-    where DT: ShVarDataType
+    where DT: VarDataType
   {
     let var_decl_stmt_model = VarDeclStmtModel::new(name.to_string(), expr.model);
     self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
@@ -97,7 +100,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     lvalue: &LvalueHandle<'cb, DT>,
     expr: ExprHandle<'cb, DT>,
   )
-    where DT: ShVarDataType
+    where DT: VarDataType
   {
     let assign_stmt_model = AssignStmtModel::new(lvalue.name.clone(), expr.model);
     self.statements.push(StatementModel::Assign(assign_stmt_model));
@@ -148,7 +151,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * Create a new literal expression.
    */
   pub fn literal_expr<DT>(&self, value: DT) -> ExprHandle<'cb, DT>
-    where DT: ShLiteralDataType
+    where DT: LiteralDataType
   {
     let literal_value = value.to_sh_literal_data_value();
     let literal_expr_model = LiteralExprModel::new(literal_value);

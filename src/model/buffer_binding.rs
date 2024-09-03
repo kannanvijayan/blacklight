@@ -1,4 +1,4 @@
-use crate::api::data_type::ShBufferDataTypeRepr;
+use crate::api::data_type::BufferDataTypeRepr;
 
 /**
  * A model of a binding to a buffer within a shader module.
@@ -15,7 +15,7 @@ pub struct BufferBindingModel {
   _index: u32,
 
   // The data type of the buffer binding.
-  _data_type: ShBufferDataTypeRepr,
+  _data_type: BufferDataTypeRepr,
 }
 impl BufferBindingModel {
   /** Create a new buffer binding. */
@@ -23,7 +23,7 @@ impl BufferBindingModel {
     name: String,
     group: u32,
     index: u32,
-    data_type: ShBufferDataTypeRepr,
+    data_type: BufferDataTypeRepr,
   ) -> BufferBindingModel {
     BufferBindingModel {
       _name: name,

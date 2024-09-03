@@ -1,8 +1,9 @@
 use std::{collections::HashSet, marker::PhantomData};
 use crate::{
   api::{
-    builder::{ CodeBlockBuilder, ExprHandle, BufferBindingHandle },
-    data_type::{ ShBufferDataType, ShEpArgDataType },
+    builder::CodeBlockBuilder,
+    data_type::{ BufferDataType, EntryPointArgDataType },
+    handle::{ BufferBindingHandle, ExprHandle },
     EntryPoint,
     Project,
     Shader,
@@ -11,6 +12,7 @@ use crate::{
     BufferBindingModel,
     EntryPointModel,
     ExpressionModel,
+    IdentifierExprModel,
     ShaderModel,
   },
 };
@@ -44,10 +46,12 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
   ) -> EntryPoint<ARG>
   where
     EPB: FnOnce(&mut CodeBlockBuilder<'sh, 'sh, ()>, ExprHandle<'sh, ARG>),
-    ARG: ShEpArgDataType
+    ARG: EntryPointArgDataType
   {
     let mut code_block_builder = CodeBlockBuilder::new();
-    let arg_expr = ExprHandle::new(ExpressionModel::identifier("global_id"));
+    let ident_expr_model = IdentifierExprModel::new("global_id".to_string());
+    let arg_expr =
+      ExprHandle::new(ExpressionModel::Identifier(ident_expr_model));
     builder_func(&mut code_block_builder, arg_expr);
     let code_block_model = code_block_builder.build();
     let entry_point_model = EntryPointModel::new(name.into(), code_block_model);
@@ -61,7 +65,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     group: u32,
     index: u32
   ) -> BufferBindingHandle<'sh, DT>
-  where DT: ShBufferDataType
+  where DT: BufferDataType
   {
     if self.used_buffer_bindings.contains(&(group, index)) {
       panic!("Buffer binding with group {} and index {} already defined.", group, index);
