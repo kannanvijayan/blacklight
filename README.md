@@ -16,8 +16,8 @@ rust `wgsl` library.
     - `entry_point.rs` - top-level entrypoint encapsulation
     - `data_type/` - type-mappings from rust types to classes of wgsl types
     - `builder/` - procedural builder API for constructing shaders
-      + `*_builder.rs` - the builders passed to builder callbacks
-      + `*_handle.rs` - lifetime-annotated references to declarations.
+    - `handle/` - lifetime-annotated model handles for use within builders.
+  * `printer` - the code to generate pretty wgsl text from a model.
     
 The general expectation is that things in `model/` share their underlying
 contents and are cloneable, and have static lifetime.
