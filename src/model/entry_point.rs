@@ -1,6 +1,6 @@
 use crate::{
+  api::block_dims::BlockDims,
   model::CodeBlockModel,
-  util::Shared,
 };
 
 /**
@@ -8,28 +8,37 @@ use crate::{
  */
 #[derive(Clone, Debug)]
 pub(crate) struct EntryPointModel {
-  _shared: Shared<EntryPointModelShared>
+  // The name of the entry point.
+  name: String,
+
+  // The block dims of the entry point.
+  block_dims: BlockDims,
+
+  // The code block for the entry point.
+  code_block: CodeBlockModel,
 }
 impl EntryPointModel {
   /** Create a new entry point. */
-  pub(crate) fn new(name: String, code_block: CodeBlockModel) -> EntryPointModel {
-    EntryPointModel {
-      _shared: Shared::new(EntryPointModelShared::new(name, code_block))
-    }
+  pub(crate) fn new(
+    name: String,
+    block_dims: BlockDims,
+    code_block: CodeBlockModel,
+  ) -> EntryPointModel {
+    EntryPointModel { name, block_dims, code_block }
   }
-}
 
-#[derive(Clone, Debug)]
-struct EntryPointModelShared {
-  // The name of the entry point.
-  _name: String,
+  /** Get the name of the entry point. */
+  pub(crate) fn name(&self) -> &str {
+    &self.name
+  }
 
-  // The code block for the entry point.
-  _code_block: CodeBlockModel,
-}
-impl EntryPointModelShared {
-  /** Create a new entry point. */
-  pub(crate) fn new(name: String, code_block: CodeBlockModel) -> Self {
-    EntryPointModelShared { _name: name, _code_block: code_block }
+  /** Get the block dims of the entry point. */
+  pub(crate) fn block_dims(&self) -> BlockDims {
+    self.block_dims
+  }
+
+  /** Get the code block for the entry point. */
+  pub(crate) fn code_block(&self) -> &CodeBlockModel {
+    &self.code_block
   }
 }

@@ -1,6 +1,7 @@
 use std::{collections::HashSet, marker::PhantomData};
 use crate::{
   api::{
+    buffer_disposition::{ BufferRead, BufferReadWrite, BufferWrite },
     builder::CodeBlockBuilder,
     data_type::{ BufferDataType, EntryPointArgDataType },
     handle::{ BufferBindingHandle, ExprHandle },
@@ -8,13 +9,14 @@ use crate::{
     Project,
     Shader,
   },
+  buffer_disposition::BufferDisposition,
   model::{
     BufferBindingModel,
     EntryPointModel,
     ExpressionModel,
     IdentifierExprModel,
     ShaderModel,
-  },
+  }
 };
 
 /**
@@ -42,6 +44,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
   /** Define a new linear shader entrypoint. */
   pub fn define_entrypoint<ARG, EPB>(&mut self,
     name: &'static str,
+    block_dims: ARG,
     builder_func: EPB
   ) -> EntryPoint<ARG>
   where
@@ -54,18 +57,57 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
       ExprHandle::new(ExpressionModel::Identifier(ident_expr_model));
     builder_func(&mut code_block_builder, arg_expr);
     let code_block_model = code_block_builder.build();
-    let entry_point_model = EntryPointModel::new(name.into(), code_block_model);
+    let entry_point_model =
+      EntryPointModel::new(
+        name.into(),
+        block_dims.to_block_dims(),
+        code_block_model
+      );
     self.entrypoints.push(entry_point_model.clone());
     EntryPoint::new(entry_point_model)
   }
 
-  /** Define a buffer binding. */
-  pub fn define_buffer_binding<DT>(&mut self,
+  /** Define a read-only buffer binding. */
+  pub fn define_read_buffer_binding<DT>(&mut self,
     name: &str,
     group: u32,
     index: u32
-  ) -> BufferBindingHandle<'sh, DT>
-  where DT: BufferDataType
+  ) -> BufferBindingHandle<'sh, DT, BufferRead>
+    where DT: BufferDataType,
+  {
+    self.define_buffer_binding(name, group, index)
+  }
+
+  /** Define a write-only buffer binding. */
+  pub fn define_write_buffer_binding<DT>(&mut self,
+    name: &str,
+    group: u32,
+    index: u32
+  ) -> BufferBindingHandle<'sh, DT, BufferWrite>
+    where DT: BufferDataType,
+  {
+    self.define_buffer_binding(name, group, index)
+  }
+
+  /** Define a read-write buffer binding. */
+  pub fn define_read_write_buffer_binding<DT>(&mut self,
+    name: &str,
+    group: u32,
+    index: u32
+  ) -> BufferBindingHandle<'sh, DT, BufferReadWrite>
+    where DT: BufferDataType,
+  {
+    self.define_buffer_binding(name, group, index)
+  }
+
+  /** Define a buffer binding. */
+  fn define_buffer_binding<DT, DISP>(&mut self,
+    name: &str,
+    group: u32,
+    index: u32
+  ) -> BufferBindingHandle<'sh, DT, DISP>
+  where DT: BufferDataType,
+        DISP: BufferDisposition
   {
     if self.used_buffer_bindings.contains(&(group, index)) {
       panic!("Buffer binding with group {} and index {} already defined.", group, index);
@@ -74,7 +116,8 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
       name.to_string(),
       group,
       index,
-      DT::REPR
+      DT::REPR,
+      DISP::REPR,
     );
     self.buffer_bindings.push(buffer_binding_model);
     self.used_buffer_bindings.insert((group, index));

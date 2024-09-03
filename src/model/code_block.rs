@@ -7,11 +7,16 @@ use crate::model::StatementModel;
  */
 #[derive(Clone, Debug)]
 pub(crate) struct CodeBlockModel {
-  _statements: Vec<StatementModel>,
+  statements: Vec<StatementModel>,
 }
 impl CodeBlockModel {
   /** Create a new code block.  */
   pub(crate) fn new(statements: Vec<StatementModel>) -> Self {
-    CodeBlockModel { _statements: statements }
+    CodeBlockModel { statements }
+  }
+
+  /** Get the statements in the code block. */
+  pub(crate) fn statements(&self) -> &[StatementModel] {
+    &self.statements
   }
 }

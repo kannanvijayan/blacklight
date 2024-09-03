@@ -86,17 +86,36 @@ impl BufferDataType for [f32; 4] {
   }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum BufferDataTypeRepr {
   I32, Vec2I32, Vec3I32, Vec4I32,
   U32, Vec2U32, Vec3U32, Vec4U32,
   F32, Vec2F32, Vec3F32, Vec4F32,
 }
+impl BufferDataTypeRepr {
+  /** Get the string representation of the buffer data type. */
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      BufferDataTypeRepr::I32 => "i32",
+      BufferDataTypeRepr::Vec2I32 => "vec2<i32>",
+      BufferDataTypeRepr::Vec3I32 => "vec3<i32>",
+      BufferDataTypeRepr::Vec4I32 => "vec4<i32>",
+      BufferDataTypeRepr::U32 => "u32",
+      BufferDataTypeRepr::Vec2U32 => "vec2<u32>",
+      BufferDataTypeRepr::Vec3U32 => "vec3<u32>",
+      BufferDataTypeRepr::Vec4U32 => "vec4<u32>",
+      BufferDataTypeRepr::F32 => "f32",
+      BufferDataTypeRepr::Vec2F32 => "vec2<f32>",
+      BufferDataTypeRepr::Vec3F32 => "vec3<f32>",
+      BufferDataTypeRepr::Vec4F32 => "vec4<f32>",
+    }
+  }
+}
 
 /**
  * A type erasure from static and incorporation into runtime for a literal data type.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum BufferDataValue {
   I32(i32),
   Vec2I32([i32; 2]),

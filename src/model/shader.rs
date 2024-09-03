@@ -8,8 +8,8 @@ use crate::model::{
  */
 #[derive(Clone, Debug)]
 pub(crate) struct ShaderModel {
-  _buffer_bindings: Vec<BufferBindingModel>,
-  _entrypoints: Vec<EntryPointModel>,
+  buffer_bindings: Vec<BufferBindingModel>,
+  entrypoints: Vec<EntryPointModel>,
 }
 impl ShaderModel {
   /** Create a new shader model. */
@@ -18,8 +18,18 @@ impl ShaderModel {
     entrypoints: Vec<EntryPointModel>,
   ) -> Self {
     ShaderModel {
-      _buffer_bindings: buffer_bindings,
-      _entrypoints: entrypoints,
+      buffer_bindings,
+      entrypoints,
     }
+  }
+
+  /** Get the buffer bindings. */
+  pub(crate) fn buffer_bindings(&self) -> &[BufferBindingModel] {
+    &self.buffer_bindings
+  }
+
+  /** Get the entrypoints. */
+  pub(crate) fn entrypoints(&self) -> &[EntryPointModel] {
+    &self.entrypoints
   }
 }

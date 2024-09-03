@@ -21,11 +21,18 @@ impl From<IdentifierExprModel> for ExpressionModel {
  * Represents a literal expression.
  */
 #[derive(Clone, Debug)]
-pub(crate) struct LiteralExprModel(pub(crate) LiteralDataValue);
+pub(crate) struct LiteralExprModel {
+  value: LiteralDataValue,
+}
 impl LiteralExprModel {
   /** Create a new literal expression. */
   pub(crate) fn new(value: LiteralDataValue) -> Self {
-    LiteralExprModel(value)
+    LiteralExprModel { value }
+  }
+
+  /** Get the value of the literal. */
+  pub(crate) fn value(&self) -> &LiteralDataValue {
+    &self.value
   }
 }
 
@@ -35,14 +42,17 @@ impl LiteralExprModel {
 #[derive(Clone, Debug)]
 pub(crate) struct IdentifierExprModel {
   // The name of the identifier being referenced.
-  _name: String,
-
-  // TODO: add type model reference.
+  name: String,
 }
 impl IdentifierExprModel {
   /** Create a new identifier expression. */
   pub(crate) fn new(name: String) -> Self {
-    IdentifierExprModel { _name: name }
+    IdentifierExprModel { name }
+  }
+
+  /** Get the name of the identifier. */
+  pub(crate) fn name(&self) -> &str {
+    &self.name
   }
 }
 
@@ -52,24 +62,53 @@ impl IdentifierExprModel {
 #[derive(Clone, Debug)]
 pub(crate) struct CmpOpExprModel {
   // The left-hand side of the comparison.
-  _lhs: Box<ExpressionModel>,
+  lhs: Box<ExpressionModel>,
 
   // The right-hand side of the comparison.
-  _rhs: Box<ExpressionModel>,
+  rhs: Box<ExpressionModel>,
 
   // The comparison operator.
-  _op: CmpOp,
+  op: CmpOp,
 }
 
-#[derive(Clone, Debug)]
-pub enum CmpOp { Eq, Ne, Lt, Le, Gt, Ge }
 impl CmpOpExprModel {
   /** Create a new comparison operation expression. */
   pub(crate) fn new(lhs: ExpressionModel, rhs: ExpressionModel, op: CmpOp) -> Self {
     CmpOpExprModel {
-      _lhs: Box::new(lhs),
-      _rhs: Box::new(rhs),
-      _op: op,
+      lhs: Box::new(lhs),
+      rhs: Box::new(rhs),
+      op,
+    }
+  }
+
+  /** Get the left-hand side of the comparison. */
+  pub(crate) fn lhs(&self) -> &ExpressionModel {
+    &self.lhs
+  }
+
+  /** Get the right-hand side of the comparison. */
+  pub(crate) fn rhs(&self) -> &ExpressionModel {
+    &self.rhs
+  }
+
+  /** Get the comparison operator. */
+  pub(crate) fn op(&self) -> CmpOp {
+    self.op
+  }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum CmpOp { Eq, Ne, Lt, Le, Gt, Ge }
+impl CmpOp {
+  /** Get the string representation of the comparison operator */
+  pub(crate) fn operator_str(self) -> &'static str {
+    match self {
+      CmpOp::Eq => "==",
+      CmpOp::Ne => "!=",
+      CmpOp::Lt => "<",
+      CmpOp::Le => "<=",
+      CmpOp::Gt => ">",
+      CmpOp::Ge => ">=",
     }
   }
 }

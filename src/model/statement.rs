@@ -18,15 +18,25 @@ pub(crate) enum StatementModel {
 #[derive(Clone, Debug)]
 pub(crate) struct VarDeclStmtModel {
   // The name of the variable being declared.
-  _name: String,
+  name: String,
 
   // The expression being assigned to the variable.
-  _expression: ExpressionModel,
+  expression: ExpressionModel,
 }
 impl VarDeclStmtModel {
   /** Create a new variable declaration statement. */
   pub(crate) fn new(name: String, expression: ExpressionModel) -> Self {
-    VarDeclStmtModel { _name: name, _expression: expression }
+    VarDeclStmtModel { name, expression }
+  }
+
+  /** Get the name of the variable being declared. */
+  pub(crate) fn name(&self) -> &str {
+    &self.name
+  }
+
+  /** Get the expression being assigned to the variable. */
+  pub(crate) fn expression(&self) -> &ExpressionModel {
+    &self.expression
   }
 }
 
@@ -36,15 +46,25 @@ impl VarDeclStmtModel {
 #[derive(Clone, Debug)]
 pub(crate) struct AssignStmtModel {
   // The name of the variable being assigned to.
-  _name: String,
+  name: String,
 
   // The expression being assigned to the variable.
-  _expression: ExpressionModel,
+  expression: ExpressionModel,
 }
 impl AssignStmtModel {
   /** Create a new assignment statement. */
   pub(crate) fn new(name: String, expression: ExpressionModel) -> Self {
-    AssignStmtModel { _name: name, _expression: expression }
+    AssignStmtModel { name, expression }
+  }
+
+  /** Get the name of the variable being assigned to. */
+  pub(crate) fn name(&self) -> &str {
+    &self.name
+  }
+
+  /** Get the expression being assigned to the variable. */
+  pub(crate) fn expression(&self) -> &ExpressionModel {
+    &self.expression
   }
 }
 
@@ -54,13 +74,13 @@ impl AssignStmtModel {
 #[derive(Clone, Debug)]
 pub(crate) struct IfElseStmtModel {
   // The condition expression.
-  _condition: ExpressionModel,
+  condition: ExpressionModel,
 
   // The code block to execute if the condition is true.
-  _if_block: CodeBlockModel,
+  if_block: CodeBlockModel,
 
   // The code block to execute if the condition is false.
-  _else_block: Option<CodeBlockModel>,
+  else_block: Option<CodeBlockModel>,
 }
 impl IfElseStmtModel {
   /** Create a new if-else statement. */
@@ -70,10 +90,25 @@ impl IfElseStmtModel {
     else_block: Option<CodeBlockModel>,
   ) -> Self {
     IfElseStmtModel {
-      _condition: condition,
-      _if_block: if_block,
-      _else_block: else_block,
+      condition,
+      if_block,
+      else_block,
     }
+  }
+
+  /** Get the condition expression. */
+  pub(crate) fn condition(&self) -> &ExpressionModel {
+    &self.condition
+  }
+
+  /** Get the code block to execute if the condition is true. */
+  pub(crate) fn if_block(&self) -> &CodeBlockModel {
+    &self.if_block
+  }
+
+  /** Get the code block to execute if the condition is false. */
+  pub(crate) fn else_block(&self) -> Option<&CodeBlockModel> {
+    self.else_block.as_ref()
   }
 }
 
@@ -82,12 +117,17 @@ impl IfElseStmtModel {
  */
 #[derive(Clone, Debug)]
 pub(crate) struct ExprStmtModel {
-  _expression: ExpressionModel,
+  expression: ExpressionModel,
 }
 impl ExprStmtModel {
   /** Create a new expression statement. */
   pub(crate) fn new(expression: ExpressionModel) -> Self {
-    ExprStmtModel { _expression: expression }
+    ExprStmtModel { expression }
+  }
+
+  /** Get the expression. */
+  pub(crate) fn expression(&self) -> &ExpressionModel {
+    &self.expression
   }
 }
 
@@ -97,11 +137,16 @@ impl ExprStmtModel {
 #[derive(Clone, Debug)]
 pub(crate) struct ReturnStmtModel {
   // The expression being returned.
-  _expression: Option<ExpressionModel>,
+  expression: Option<ExpressionModel>,
 }
 impl ReturnStmtModel {
   /** Create a new return statement. */
   pub(crate) fn new(expression: Option<ExpressionModel>) -> Self {
-    ReturnStmtModel { _expression: expression }
+    ReturnStmtModel { expression }
+  }
+
+  /** Get the expression being returned. */
+  pub(crate) fn expression(&self) -> Option<&ExpressionModel> {
+    self.expression.as_ref()
   }
 }
