@@ -15,7 +15,7 @@ pub use self::{
     BufferDataTypeRepr,
   },
   ep_arg_data_type::EntryPointArgDataType,
-  expr_data_type::ExprDataType,
+  expr_data_type::{ ExprDataType, ExprNumericDataType },
   literal_data_type::{ LiteralDataType, LiteralDataValue },
   proc_result_type::ProcResultType,
   var_data_type::VarDataType,

@@ -1,6 +1,5 @@
 use crate::{
   api::Project,
-  printer::generate_wgsl,
   test::util,
 };
 
@@ -17,6 +16,10 @@ fn smoketest_project() {
         var_foo.read().eq(&cbb.literal_expr(33)),
         |cbb| {
           cbb.add_assignment_statement(&var_foo, id.clone());
+          cbb.add_assignment_statement(
+            &points_buf.elem(cbb.literal_expr(0)),
+            var_foo.read() + cbb.literal_expr(1)
+          );
         },
         |cbb| {
           cbb.add_assignment_statement(&var_foo, var_foo.read());

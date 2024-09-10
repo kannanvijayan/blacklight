@@ -12,6 +12,7 @@ use crate::{
     ExprStmtModel,
     ExpressionModel,
     IfElseStmtModel,
+    LvalueModel,
     ReturnStmtModel,
     ShaderModel,
     StatementModel,
@@ -123,9 +124,24 @@ fn gen_var_decl(gen: &mut GeneratorBuffer, var_decl: &VarDeclStmtModel) {
 }
 
 fn gen_assign_stmt(gen: &mut GeneratorBuffer, assign_stmt: &AssignStmtModel) {
-  gen.write_start(format!("{} = ", assign_stmt.name()));
+  gen.write_start("");
+  gen_lvalue_expr(gen, assign_stmt.target());
+  gen.write(" = ");
   gen_expression(gen, assign_stmt.expression());
   gen.write_end(";");
+}
+
+fn gen_lvalue_expr(gen: &mut GeneratorBuffer, lvalue: &LvalueModel) {
+  match lvalue {
+    LvalueModel::Variable(var_name) => {
+      gen.write(var_name);
+    },
+    LvalueModel::BufferElement(buffer_name, index_expr) => {
+      gen.write(format!("{}[", buffer_name));
+      gen_expression(gen, index_expr);
+      gen.write("]");
+    },
+  }
 }
 
 fn gen_if_else_stmt(gen: &mut GeneratorBuffer, if_else_stmt: &IfElseStmtModel) {
@@ -169,6 +185,19 @@ fn gen_expression(gen: &mut GeneratorBuffer, expr: &ExpressionModel) {
     },
     ExpressionModel::CmpOp(cmp_op_expr) => {
       gen_cmp_op_expr(gen, cmp_op_expr);
+    },
+    ExpressionModel::BinOp(bin_op_expr) => {
+      gen.write("(");
+      gen_expression(gen, bin_op_expr.lhs());
+      gen.write(format!(" {} ", bin_op_expr.op().operator_str()));
+      gen_expression(gen, bin_op_expr.rhs());
+      gen.write(")");
+    },
+    ExpressionModel::BufferRead(buffer_read_expr) => {
+      gen.write(buffer_read_expr.buffer_name());
+      gen.write("[");
+      gen_expression(gen, buffer_read_expr.index());
+      gen.write("]");
     },
   }
 }

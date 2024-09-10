@@ -34,3 +34,37 @@ impl ExprDataType for [f32; 3] {
 }
 impl ExprDataType for [f32; 4] {
 }
+
+
+/**
+ * Expr data types that are numeric in nature (i.e. are field data types).
+ */
+pub trait ExprNumericDataType: ExprDataType {
+}
+
+impl ExprNumericDataType for i32 {
+}
+impl ExprNumericDataType for [i32; 2] {
+}
+impl ExprNumericDataType for [i32; 3] {
+}
+impl ExprNumericDataType for [i32; 4] {
+}
+
+impl ExprNumericDataType for u32 {
+}
+impl ExprNumericDataType for [u32; 2] {
+}
+impl ExprNumericDataType for [u32; 3] {
+}
+impl ExprNumericDataType for [u32; 4] {
+}
+
+impl ExprNumericDataType for f32 {
+}
+impl ExprNumericDataType for [f32; 2] {
+}
+impl ExprNumericDataType for [f32; 3] {
+}
+impl ExprNumericDataType for [f32; 4] {
+}

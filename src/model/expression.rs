@@ -8,13 +8,8 @@ pub(crate) enum ExpressionModel {
   Literal(LiteralExprModel),
   Identifier(IdentifierExprModel),
   CmpOp(CmpOpExprModel),
-}
-impl ExpressionModel {
-}
-impl From<IdentifierExprModel> for ExpressionModel {
-  fn from(expr: IdentifierExprModel) -> Self {
-    Self::Identifier(expr)
-  }
+  BinOp(BinOpExprModel),
+  BufferRead(BufferReadExprModel),
 }
 
 /**
@@ -109,6 +104,90 @@ impl CmpOp {
       CmpOp::Le => "<=",
       CmpOp::Gt => ">",
       CmpOp::Ge => ">=",
+    }
+  }
+}
+
+/**
+ * Represents a read from a buffer.
+ */
+#[derive(Clone, Debug)]
+pub(crate) struct BufferReadExprModel {
+  // The buffer binding being read from.
+  buffer_name: String,
+
+  // The index of the element being read.
+  index: Box<ExpressionModel>,
+}
+impl BufferReadExprModel {
+  /** Create a new buffer read expression. */
+  pub(crate) fn new(buffer_name: String, index: Box<ExpressionModel>) -> Self {
+    BufferReadExprModel { buffer_name, index }
+  }
+
+  /** Get the name of the buffer binding being read from. */
+  pub(crate) fn buffer_name(&self) -> &str {
+    &self.buffer_name
+  }
+
+  /** Get the index of the element being read. */
+  pub(crate) fn index(&self) -> &ExpressionModel {
+    &self.index
+  }
+}
+
+/**
+ * Represents a binary operation expression.
+ */
+#[derive(Clone, Debug)]
+pub(crate) struct BinOpExprModel {
+  // The left-hand side of the binary operation.
+  lhs: Box<ExpressionModel>,
+
+  // The right-hand side of the binary operation.
+  rhs: Box<ExpressionModel>,
+
+  // The binary operator.
+  op: BinOp,
+}
+
+impl BinOpExprModel {
+  /** Create a new binary operation expression. */
+  pub(crate) fn new(lhs: ExpressionModel, rhs: ExpressionModel, op: BinOp) -> Self {
+    BinOpExprModel {
+      lhs: Box::new(lhs),
+      rhs: Box::new(rhs),
+      op,
+    }
+  }
+
+  /** Get the left-hand side of the binary operation. */
+  pub(crate) fn lhs(&self) -> &ExpressionModel {
+    &self.lhs
+  }
+
+  /** Get the right-hand side of the binary operation. */
+  pub(crate) fn rhs(&self) -> &ExpressionModel {
+    &self.rhs
+  }
+
+  /** Get the binary operator. */
+  pub(crate) fn op(&self) -> BinOp {
+    self.op
+  }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum BinOp { Add, Sub, Mul, Div, Rem }
+impl BinOp {
+  /** Get the string representation of the binary operator */
+  pub(crate) fn operator_str(self) -> &'static str {
+    match self {
+      BinOp::Add => "+",
+      BinOp::Sub => "-",
+      BinOp::Mul => "*",
+      BinOp::Div => "/",
+      BinOp::Rem => "%",
     }
   }
 }

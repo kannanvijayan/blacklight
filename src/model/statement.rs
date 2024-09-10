@@ -1,4 +1,4 @@
-use crate::model::{ CodeBlockModel, ExpressionModel };
+use crate::model::{ CodeBlockModel, ExpressionModel, LvalueModel, };
 
 /**
  * Represents a statement in a shader code block.
@@ -46,20 +46,20 @@ impl VarDeclStmtModel {
 #[derive(Clone, Debug)]
 pub(crate) struct AssignStmtModel {
   // The name of the variable being assigned to.
-  name: String,
+  target: LvalueModel,
 
   // The expression being assigned to the variable.
   expression: ExpressionModel,
 }
 impl AssignStmtModel {
   /** Create a new assignment statement. */
-  pub(crate) fn new(name: String, expression: ExpressionModel) -> Self {
-    AssignStmtModel { name, expression }
+  pub(crate) fn new(target: LvalueModel, expression: ExpressionModel) -> Self {
+    AssignStmtModel { target, expression }
   }
 
   /** Get the name of the variable being assigned to. */
-  pub(crate) fn name(&self) -> &str {
-    &self.name
+  pub(crate) fn target(&self) -> &LvalueModel {
+    &self.target
   }
 
   /** Get the expression being assigned to the variable. */

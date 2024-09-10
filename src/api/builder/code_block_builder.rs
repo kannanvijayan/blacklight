@@ -11,6 +11,7 @@ use crate::{
     ExpressionModel,
     IfElseStmtModel,
     LiteralExprModel,
+    LvalueModel,
     ReturnStmtModel,
     StatementModel,
     VarDeclStmtModel,
@@ -90,7 +91,9 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
   {
     let var_decl_stmt_model = VarDeclStmtModel::new(name.to_string(), expr.model);
     self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
-    LvalueHandle::new(name.to_string())
+
+    let lvalue_var_model = LvalueModel::new_variable(name.to_string());
+    LvalueHandle::new(lvalue_var_model)
   }
 
   /**
@@ -102,7 +105,10 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
   )
     where DT: VarDataType
   {
-    let assign_stmt_model = AssignStmtModel::new(lvalue.name.clone(), expr.model);
+    let assign_stmt_model = AssignStmtModel::new(
+      lvalue.model().clone(),
+      expr.model
+    );
     self.statements.push(StatementModel::Assign(assign_stmt_model));
   }
 

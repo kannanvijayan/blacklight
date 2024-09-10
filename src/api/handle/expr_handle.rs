@@ -1,7 +1,10 @@
-use std::marker::PhantomData;
+use std::{
+  marker::PhantomData,
+  ops,
+};
 use crate::{
-  api::data_type::ExprDataType,
-  model::{CmpOp, CmpOpExprModel, ExpressionModel},
+  api::data_type::{ ExprDataType, ExprNumericDataType },
+  model::{ BinOp, BinOpExprModel, CmpOp, CmpOpExprModel, ExpressionModel },
 };
 
 /**
@@ -60,3 +63,39 @@ impl<'cb, DT: ExprDataType> Clone for ExprHandle<'cb, DT> {
     ExprHandle { model: self.model.clone(), _phantom: PhantomData }
   }
 }
+
+// Generin binop helper.
+fn make_binop<'cb, DT>(
+  lhs: ExprHandle<'cb, DT>,
+  rhs: ExprHandle<'cb, DT>,
+  binop: BinOp
+) -> ExprHandle<'cb, DT>
+  where DT: ExprNumericDataType
+{
+  let binop_expr_model = BinOpExprModel::new(
+    lhs.model.clone(),
+    rhs.model.clone(),
+    binop,
+  );
+  ExprHandle::new(ExpressionModel::BinOp(binop_expr_model))
+}
+
+// Macro to generate binary operator implementations.
+macro_rules! impl_binop {
+  ($class:ident, $op:ident, $binop:expr) => {
+    impl<'cb, DT> ops::$class for ExprHandle<'cb, DT>
+      where DT: ExprNumericDataType
+    {
+      type Output = ExprHandle<'cb, DT>;
+      fn $op(self, other: Self) -> Self::Output {
+        make_binop(self, other, $binop)
+      }
+    }
+  };
+}
+
+impl_binop!(Add, add, BinOp::Add);
+impl_binop!(Sub, sub, BinOp::Sub);
+impl_binop!(Mul, mul, BinOp::Mul);
+impl_binop!(Div, div, BinOp::Div);
+impl_binop!(Rem, rem, BinOp::Rem);
