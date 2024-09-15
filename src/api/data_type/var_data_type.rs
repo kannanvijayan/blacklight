@@ -1,10 +1,10 @@
-use super::ExprDataType;
+use crate::api::data_type::ExprDataType;
 
 
 /**
  * Data types that can be used in wgsl shader variable declarations.
  */
-pub trait VarDataType: Sized + ExprDataType {
+pub trait VarDataType: ExprDataType {
 }
 
 impl VarDataType for i32 {

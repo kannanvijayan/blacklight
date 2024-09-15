@@ -1,10 +1,9 @@
-use crate::api::data_type::ExprDataType;
-
+use crate::api::data_type::{ DataTypeRepr, ExprDataType };
 
 /**
  * Data types that can have literal values in the shader source.
  */
-pub trait LiteralDataType: 'static + Sized + ExprDataType {
+pub trait LiteralDataType: ExprDataType {
   /** Convert to an `ShLiteralDataValue` */
   fn to_sh_literal_data_value(&self) -> LiteralDataValue;
 }
@@ -96,4 +95,24 @@ pub enum LiteralDataValue {
   Vec2F32([f32; 2]),
   Vec3F32([f32; 3]),
   Vec4F32([f32; 4]),
+}
+impl LiteralDataValue {
+  /** Get the datatype for this value. */
+  pub fn data_type_repr(&self) -> DataTypeRepr {
+    match self {
+      LiteralDataValue::Bool(_) => DataTypeRepr::new_bool(),
+      LiteralDataValue::I32(_) => DataTypeRepr::new_i32(),
+      LiteralDataValue::Vec2I32(_) => DataTypeRepr::new_vec2_i32(),
+      LiteralDataValue::Vec3I32(_) => DataTypeRepr::new_vec3_i32(),
+      LiteralDataValue::Vec4I32(_) => DataTypeRepr::new_vec4_i32(),
+      LiteralDataValue::U32(_) => DataTypeRepr::new_u32(),
+      LiteralDataValue::Vec2U32(_) => DataTypeRepr::new_vec2_u32(),
+      LiteralDataValue::Vec3U32(_) => DataTypeRepr::new_vec3_u32(),
+      LiteralDataValue::Vec4U32(_) => DataTypeRepr::new_vec4_u32(),
+      LiteralDataValue::F32(_) => DataTypeRepr::new_f32(),
+      LiteralDataValue::Vec2F32(_) => DataTypeRepr::new_vec2_f32(),
+      LiteralDataValue::Vec3F32(_) => DataTypeRepr::new_vec3_f32(),
+      LiteralDataValue::Vec4F32(_) => DataTypeRepr::new_vec4_f32(),
+    }
+  }
 }

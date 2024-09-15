@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use crate::{
   api::{
     buffer_disposition::BufferDisposition,
-    data_type::BufferDataType,
+    data_type::HostShareableDataType,
     handle::{ ExprHandle, LvalueHandle },
   },
   data_type::VarDataType,
@@ -14,13 +14,13 @@ use crate::{
  */
 #[derive(Clone, Debug)]
 pub struct BufferBindingHandle<'sh, DT, DISP>
-  where DT: BufferDataType, DISP: BufferDisposition
+  where DT: HostShareableDataType, DISP: BufferDisposition
 {
   name: String,
   _phantom: PhantomData<&'sh (DT, DISP)>,
 }
 impl<'sh, DT, DISP> BufferBindingHandle<'sh, DT, DISP>
-  where DT: BufferDataType, DISP: BufferDisposition
+  where DT: HostShareableDataType, DISP: BufferDisposition
 {
   /** Create a new buffer binding handle. */
   pub(crate) fn new(name: String) -> Self {
@@ -39,7 +39,11 @@ impl<'sh, DT, DISP> BufferBindingHandle<'sh, DT, DISP>
         'sh: 'cb,
   {
     let lvalue_model =
-      LvalueModel::new_buffer_element(self.name.clone(), index.model);
+      LvalueModel::new_buffer_element(
+        self.name.clone(),
+        index.model,
+        DT::repr(),
+      );
     LvalueHandle::new(lvalue_model)
   }
 }

@@ -92,7 +92,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     let var_decl_stmt_model = VarDeclStmtModel::new(name.to_string(), expr.model);
     self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
 
-    let lvalue_var_model = LvalueModel::new_variable(name.to_string());
+    let lvalue_var_model = LvalueModel::new_variable(name.to_string(), DT::repr());
     LvalueHandle::new(lvalue_var_model)
   }
 

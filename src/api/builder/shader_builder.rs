@@ -1,9 +1,17 @@
-use std::{collections::HashSet, marker::PhantomData};
+use std::{
+  collections::{ HashMap, HashSet },
+  marker::PhantomData,
+};
 use crate::{
   api::{
     buffer_disposition::{ BufferRead, BufferReadWrite, BufferWrite },
     builder::CodeBlockBuilder,
-    data_type::{ BufferDataType, EntryPointArgDataType },
+    data_type::{
+      DataTypeRepr,
+      StructDataTypeRepr,
+      HostShareableDataType,
+      EntryPointArgDataType,
+    },
     handle::{ BufferBindingHandle, ExprHandle },
     EntryPoint,
     Project,
@@ -15,6 +23,7 @@ use crate::{
     EntryPointModel,
     ExpressionModel,
     IdentifierExprModel,
+    IdentifierModel,
     ShaderModel,
   }
 };
@@ -24,6 +33,8 @@ use crate::{
  */
 pub struct ShaderBuilder<'sh, 'pr: 'sh> {
   _project: &'pr Project,
+  defined_names: HashMap<String, DefinedNameKind>,
+  struct_data_types: Vec<StructDataTypeRepr>,
   entrypoints: Vec<EntryPointModel>,
   buffer_bindings: Vec<BufferBindingModel>,
   used_buffer_bindings: HashSet<(u32, u32)>,
@@ -34,6 +45,8 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
   pub(crate) fn new(project: &'pr Project) -> Self {
     ShaderBuilder {
       _project: project,
+      defined_names: HashMap::new(),
+      struct_data_types: Vec::new(),
       entrypoints: Vec::new(),
       buffer_bindings: Vec::new(),
       used_buffer_bindings: HashSet::new(),
@@ -52,7 +65,8 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     ARG: EntryPointArgDataType
   {
     let mut code_block_builder = CodeBlockBuilder::new();
-    let ident_expr_model = IdentifierExprModel::new("global_id".to_string());
+    let ident_model = IdentifierModel::new("global_id");
+    let ident_expr_model = IdentifierExprModel::new(ident_model, ARG::repr());
     let arg_expr =
       ExprHandle::new(ExpressionModel::Identifier(ident_expr_model));
     builder_func(&mut code_block_builder, arg_expr);
@@ -73,7 +87,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     group: u32,
     index: u32
   ) -> BufferBindingHandle<'sh, DT, BufferRead>
-    where DT: BufferDataType,
+    where DT: HostShareableDataType,
   {
     self.define_buffer_binding(name, group, index)
   }
@@ -84,7 +98,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     group: u32,
     index: u32
   ) -> BufferBindingHandle<'sh, DT, BufferWrite>
-    where DT: BufferDataType,
+    where DT: HostShareableDataType,
   {
     self.define_buffer_binding(name, group, index)
   }
@@ -95,7 +109,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     group: u32,
     index: u32
   ) -> BufferBindingHandle<'sh, DT, BufferReadWrite>
-    where DT: BufferDataType,
+    where DT: HostShareableDataType,
   {
     self.define_buffer_binding(name, group, index)
   }
@@ -106,17 +120,20 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     group: u32,
     index: u32
   ) -> BufferBindingHandle<'sh, DT, DISP>
-  where DT: BufferDataType,
+  where DT: HostShareableDataType,
         DISP: BufferDisposition
   {
     if self.used_buffer_bindings.contains(&(group, index)) {
       panic!("Buffer binding with group {} and index {} already defined.", group, index);
     }
+    let dt_repr = DT::repr();
+    self.ensure_data_type(&dt_repr);
+    // Ensure that the 
     let buffer_binding_model = BufferBindingModel::new(
       name.to_string(),
       group,
       index,
-      DT::REPR,
+      dt_repr,
       DISP::REPR,
     );
     self.buffer_bindings.push(buffer_binding_model);
@@ -124,10 +141,61 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     BufferBindingHandle::new(name.to_string())
   }
 
+  /** Ensure that a data type is added to this shader's definition, if needed */
+  fn ensure_data_type(&mut self, data_type: &DataTypeRepr) {
+    match data_type {
+      DataTypeRepr::Struct(struct_data_type) => {
+        self.ensure_struct_data_type(struct_data_type);
+      },
+      _ => {}
+    }
+  }
+
+  /** Ensure that a struct data type is added to this shader's definition. */
+  fn ensure_struct_data_type(&mut self, struct_data_type: &StructDataTypeRepr) {
+    let exists = self.ensure_name(
+      struct_data_type.name(),
+      DefinedNameKind::StructDataType
+    );
+    if !exists {
+      // Add any of the struct's embedded struct types to the shader first.
+      for field in struct_data_type.fields() {
+        self.ensure_data_type(field.data_type());
+      }
+      self.struct_data_types.push(struct_data_type.clone());
+    }
+  }
+
+  /** Ensure that a name is not already defined. */
+  fn ensure_name(&mut self, name: &str, kind: DefinedNameKind) -> bool {
+    let entry = self.defined_names.get(name);
+    if let Some(entry_kind) = entry {
+      if entry_kind != &kind {
+        panic!("Name '{}' is already defined as a different kind.", name);
+      }
+      true
+    } else {
+      self.defined_names.insert(name.to_string(), kind);
+      false
+    }
+  }
+
   /** Build the shader from the definitions provided. */
   pub(crate) fn build(self) -> Shader {
     let shader_model =
-      ShaderModel::new(self.buffer_bindings, self.entrypoints);
+      ShaderModel::new(
+        self.struct_data_types,
+        self.buffer_bindings,
+        self.entrypoints
+      );
     Shader::new(shader_model)
   }
+}
+
+
+// Defined name kinds.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum DefinedNameKind {
+  BufferBinding,
+  StructDataType,
 }

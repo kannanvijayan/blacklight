@@ -3,7 +3,7 @@ use crate::api::data_type::{ ExprDataType, VarDataType };
 /**
  * Data types that can be used to annotate wgsl entrypoint arguments.
  */
-pub trait ArgDataType: Sized + VarDataType + ExprDataType {
+pub trait ArgDataType: VarDataType {
 }
 impl ArgDataType for i32 {
 }

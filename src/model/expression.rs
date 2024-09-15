@@ -1,4 +1,7 @@
-use crate::api::data_type::LiteralDataValue;
+use crate::{
+  api::data_type::{ DataTypeRepr, LiteralDataValue },
+  model::IdentifierModel,
+};
 
 /**
  * Represents an expression in a shader code block.
@@ -10,6 +13,17 @@ pub(crate) enum ExpressionModel {
   CmpOp(CmpOpExprModel),
   BinOp(BinOpExprModel),
   BufferRead(BufferReadExprModel),
+}
+impl ExpressionModel {
+  pub(crate) fn data_type(&self) -> DataTypeRepr {
+    match self {
+      ExpressionModel::Literal(literal_expr) => literal_expr.value().data_type_repr(),
+      ExpressionModel::Identifier(identifier_expr) => identifier_expr.data_type().clone(),
+      ExpressionModel::CmpOp(_) => DataTypeRepr::new_bool(),
+      ExpressionModel::BinOp(bin_op_expr) => bin_op_expr.lhs().data_type().clone(),
+      ExpressionModel::BufferRead(buffer_read_expr) => buffer_read_expr.data_type().clone(),
+    }
+  }
 }
 
 /**
@@ -37,17 +51,28 @@ impl LiteralExprModel {
 #[derive(Clone, Debug)]
 pub(crate) struct IdentifierExprModel {
   // The name of the identifier being referenced.
-  name: String,
+  identifier: IdentifierModel,
+
+  // The data type of the identifier.
+  data_type: DataTypeRepr,
 }
 impl IdentifierExprModel {
   /** Create a new identifier expression. */
-  pub(crate) fn new(name: String) -> Self {
-    IdentifierExprModel { name }
+  pub(crate) fn new(
+    identifier: IdentifierModel,
+    data_type: DataTypeRepr,
+  ) -> Self {
+    IdentifierExprModel { identifier, data_type }
   }
 
   /** Get the name of the identifier. */
-  pub(crate) fn name(&self) -> &str {
-    &self.name
+  pub(crate) fn identifier(&self) -> &IdentifierModel {
+    &self.identifier
+  }
+
+  /** Get the data type of the identifier. */
+  pub(crate) fn data_type(&self) -> &DataTypeRepr {
+    &self.data_type
   }
 }
 
@@ -118,11 +143,18 @@ pub(crate) struct BufferReadExprModel {
 
   // The index of the element being read.
   index: Box<ExpressionModel>,
+
+  // The element data type of the buffer binding.
+  data_type: DataTypeRepr,
 }
 impl BufferReadExprModel {
   /** Create a new buffer read expression. */
-  pub(crate) fn new(buffer_name: String, index: Box<ExpressionModel>) -> Self {
-    BufferReadExprModel { buffer_name, index }
+  pub(crate) fn new(
+    buffer_name: String,
+    index: Box<ExpressionModel>,
+    data_type: DataTypeRepr,
+  ) -> Self {
+    BufferReadExprModel { buffer_name, index, data_type }
   }
 
   /** Get the name of the buffer binding being read from. */
@@ -133,6 +165,11 @@ impl BufferReadExprModel {
   /** Get the index of the element being read. */
   pub(crate) fn index(&self) -> &ExpressionModel {
     &self.index
+  }
+
+  /** Get the element data type of the buffer binding. */
+  pub(crate) fn data_type(&self) -> &DataTypeRepr {
+    &self.data_type
   }
 }
 

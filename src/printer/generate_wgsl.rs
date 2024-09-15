@@ -37,6 +37,24 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
   gen.newline();
   gen.newline();
 
+  // Write out type bindings.
+  gen.write_line(LONG_COMMENT_BAR);
+  gen.write_line("/// Type bindings.");
+  gen.newline();
+  for struct_data_type in model.struct_data_types() {
+    gen.write_line(format!("struct {} {{", struct_data_type.name()));
+    gen.with_indent(|gen| {
+      for field in struct_data_type.fields() {
+        gen.write_line(format!("{}: {},",
+          field.name(),
+          field.data_type().wgsl_source(),
+        ));
+      }
+    });
+    gen.write_line("}");
+    gen.newline();
+  }
+
   // Write out buffer bindings.
   gen.write_line(LONG_COMMENT_BAR);
   gen.write_line("/// Buffer bindings.");
@@ -66,7 +84,7 @@ fn gen_buffer_binding(gen: &mut GeneratorBuffer, buffer_binding: &BufferBindingM
   gen.write_line(format!("var<storage, {}> {}: array<{}>;",
     disposition.as_str(),
     buffer_binding.name(),
-    buffer_binding.data_type().as_str(),
+    buffer_binding.data_type().wgsl_source(),
   ));
 }
 
@@ -118,7 +136,10 @@ fn gen_statement(gen: &mut GeneratorBuffer, stmt: &StatementModel) {
 }
 
 fn gen_var_decl(gen: &mut GeneratorBuffer, var_decl: &VarDeclStmtModel) {
-  gen.write_start(format!("var {}: {} = ", var_decl.name(), "TYPE"));
+  gen.write_start(format!("var {}: {} = ",
+    var_decl.name(),
+    var_decl.data_type().wgsl_source(),
+  ));
   gen_expression(gen, var_decl.expression());
   gen.write_end(";");
 }
@@ -133,10 +154,10 @@ fn gen_assign_stmt(gen: &mut GeneratorBuffer, assign_stmt: &AssignStmtModel) {
 
 fn gen_lvalue_expr(gen: &mut GeneratorBuffer, lvalue: &LvalueModel) {
   match lvalue {
-    LvalueModel::Variable(var_name) => {
+    LvalueModel::Variable(var_name, _) => {
       gen.write(var_name);
     },
-    LvalueModel::BufferElement(buffer_name, index_expr) => {
+    LvalueModel::BufferElement(buffer_name, index_expr, _) => {
       gen.write(format!("{}[", buffer_name));
       gen_expression(gen, index_expr);
       gen.write("]");
@@ -178,7 +199,7 @@ fn gen_return_stmt(gen: &mut GeneratorBuffer, return_stmt: &ReturnStmtModel) {
 fn gen_expression(gen: &mut GeneratorBuffer, expr: &ExpressionModel) {
   match expr {
     ExpressionModel::Identifier(ident_expr) => {
-      gen.write(ident_expr.name());
+      gen.write(ident_expr.identifier().as_str());
     },
     ExpressionModel::Literal(literal_expr) => {
       gen_literal_data_value(gen, literal_expr.value());

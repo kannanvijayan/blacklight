@@ -1,4 +1,7 @@
-use crate::model::{ CodeBlockModel, ExpressionModel, LvalueModel, };
+use crate::{
+  api::data_type::DataTypeRepr,
+  model::{ CodeBlockModel, ExpressionModel, LvalueModel },
+};
 
 /**
  * Represents a statement in a shader code block.
@@ -37,6 +40,11 @@ impl VarDeclStmtModel {
   /** Get the expression being assigned to the variable. */
   pub(crate) fn expression(&self) -> &ExpressionModel {
     &self.expression
+  }
+
+  /** Get the data type for this statement model. */
+  pub(crate) fn data_type(&self) -> DataTypeRepr {
+    self.expression.data_type()
   }
 }
 

@@ -2,6 +2,7 @@ mod buffer_binding;
 mod code_block;
 mod entry_point;
 mod expression;
+mod identifier;
 mod lvalue;
 mod shader;
 mod statement;
@@ -20,6 +21,7 @@ pub(crate) use self::{
     IdentifierExprModel,
     LiteralExprModel,
   },
+  identifier::IdentifierModel,
   lvalue::LvalueModel,
   shader::ShaderModel,
   statement::{

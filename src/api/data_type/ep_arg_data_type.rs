@@ -9,9 +9,7 @@ use crate::api::{
  * Trait that describes types which can serve as arguments to
  * shader entrypoints.
  */
-pub trait EntryPointArgDataType
-  : Sized + ArgDataType + VarDataType + ExprDataType
-{
+pub trait EntryPointArgDataType : ArgDataType {
   fn to_block_dims(&self) -> BlockDims;
 }
 

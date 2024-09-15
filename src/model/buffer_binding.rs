@@ -1,6 +1,6 @@
 use crate::api::{
   buffer_disposition::BufferDispositionRepr,
-  data_type::BufferDataTypeRepr,
+  data_type::DataTypeRepr,
 };
 
 /**
@@ -18,7 +18,7 @@ pub struct BufferBindingModel {
   index: u32,
 
   // The data type of the buffer binding.
-  data_type: BufferDataTypeRepr,
+  data_type: DataTypeRepr,
 
   // The disposition of the buffer binding.
   disposition: BufferDispositionRepr,
@@ -29,7 +29,7 @@ impl BufferBindingModel {
     name: String,
     group: u32,
     index: u32,
-    data_type: BufferDataTypeRepr,
+    data_type: DataTypeRepr,
     disposition: BufferDispositionRepr,
   ) -> BufferBindingModel {
     BufferBindingModel {
@@ -57,8 +57,8 @@ impl BufferBindingModel {
   }
 
   /** Get the data type of the buffer binding. */
-  pub(crate) fn data_type(&self) -> BufferDataTypeRepr {
-    self.data_type
+  pub(crate) fn data_type(&self) -> &DataTypeRepr {
+    &self.data_type
   }
 
   /** Get the disposition of the buffer binding. */
