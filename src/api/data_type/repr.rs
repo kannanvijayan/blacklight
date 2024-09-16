@@ -3,7 +3,7 @@ use crate::model::IdentifierModel;
 /**
  * Representation of a data type.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DataTypeRepr {
   Builtin(BuiltinDataTypeRepr),
   Struct(StructDataTypeRepr),
@@ -59,8 +59,8 @@ impl DataTypeRepr {
   }
 
   /** Create a new data type representation. */
-  pub(crate) fn new_struct(name: IdentifierModel, fields: Vec<StructFieldRepr>) -> Self {
-    DataTypeRepr::Struct(StructDataTypeRepr::new(name, fields))
+  pub(crate) fn new_struct(struct_data_type_repr: StructDataTypeRepr) -> Self {
+    DataTypeRepr::Struct(struct_data_type_repr)
   }
 
   /** Get a wgsl source string representation of this type. */
@@ -82,11 +82,12 @@ impl DataTypeRepr {
         BuiltinDataTypeRepr::Vec3F32 => "vec3<f32>",
         BuiltinDataTypeRepr::Vec4F32 => "vec4<f32>",
       },
-      DataTypeRepr::Struct(struct_data_type) => struct_data_type.name(),
+      DataTypeRepr::Struct(struct_data_type) =>
+        struct_data_type.name().as_str(),
     }
   }
 
-  pub(crate) fn get_struct(&self) -> Option<&StructDataTypeRepr> {
+  pub(crate) fn take_struct(self) -> Option<StructDataTypeRepr> {
     match self {
       DataTypeRepr::Struct(struct_data_type) => Some(struct_data_type),
       _ => None,
@@ -99,7 +100,7 @@ impl DataTypeRepr {
  * This covers all possible built-in data types in WGSL, regardless of
  * what context they are allowed to be used in.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum BuiltinDataTypeRepr {
   Void, Bool,
   I32, Vec2I32, Vec3I32, Vec4I32,
@@ -110,7 +111,7 @@ pub enum BuiltinDataTypeRepr {
 /**
  * Representation of a struct definition.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StructDataTypeRepr {
   name: IdentifierModel,
   fields: Vec<StructFieldRepr>,
@@ -122,20 +123,25 @@ impl StructDataTypeRepr {
   }
 
   /** Get the name of the struct. */
-  pub fn name(&self) -> &str {
-    &self.name.as_str()
+  pub fn name(&self) -> &IdentifierModel {
+    &self.name
   }
 
   /** Get the fields of the struct. */
   pub fn fields(&self) -> &[StructFieldRepr] {
     &self.fields
   }
+
+  /** Look up a particular field. */
+  pub fn get_field(&self, name: &str) -> Option<&StructFieldRepr> {
+    self.fields.iter().find(|field| field.name() == name)
+  }
 }
 
 /**
  * Representation of a struct field.
  */
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StructFieldRepr {
   name: IdentifierModel,
   data_type: DataTypeRepr,

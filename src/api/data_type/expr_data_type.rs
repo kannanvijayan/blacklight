@@ -85,12 +85,10 @@ impl<T> ExprDataType for Struct<T>
   }
 }
 
-
 /**
  * Expr data types that are numeric in nature (i.e. are field data types).
  */
-pub trait ExprNumericDataType: ExprDataType {
-}
+pub trait ExprNumericDataType: ExprDataType {}
 
 impl ExprNumericDataType for i32 {}
 impl ExprNumericDataType for [i32; 2] {}
@@ -106,3 +104,92 @@ impl ExprNumericDataType for f32 {}
 impl ExprNumericDataType for [f32; 2] {}
 impl ExprNumericDataType for [f32; 3] {}
 impl ExprNumericDataType for [f32; 4] {}
+
+/**
+ * Expr data types that are scalar.
+ */
+pub trait ExprScalarDataType: ExprNumericDataType {
+}
+
+impl ExprScalarDataType for i32 {}
+impl ExprScalarDataType for u32 {}
+impl ExprScalarDataType for f32 {}
+
+/**
+ * Expr data types that are numeric in nature (i.e. are field data types).
+ */
+pub trait ExprVectorDataType: ExprNumericDataType {
+  type Scalar: ExprScalarDataType;
+}
+
+impl ExprVectorDataType for [i32; 2] {
+  type Scalar = i32;
+}
+impl ExprVectorDataType for [i32; 3] {
+  type Scalar = i32;
+}
+impl ExprVectorDataType for [i32; 4] {
+  type Scalar = i32;
+}
+
+impl ExprVectorDataType for [u32; 2] {
+  type Scalar = u32;
+}
+impl ExprVectorDataType for [u32; 3] {
+  type Scalar = u32;
+}
+impl ExprVectorDataType for [u32; 4] {
+  type Scalar = u32;
+}
+
+impl ExprVectorDataType for [f32; 2] {
+  type Scalar = f32;
+}
+impl ExprVectorDataType for [f32; 3] {
+  type Scalar = f32;
+}
+impl ExprVectorDataType for [f32; 4] {
+  type Scalar = f32;
+}
+
+/**
+ * Expr data types that are numeric in nature (i.e. are field data types).
+ */
+pub trait ExprIntegralDataType: ExprNumericDataType {
+  type AsUnsigned: ExprNumericDataType;
+  type AsSigned: ExprNumericDataType;
+}
+
+impl ExprIntegralDataType for i32 {
+  type AsUnsigned = u32;
+  type AsSigned = i32;
+}
+impl ExprIntegralDataType for [i32; 2] {
+  type AsUnsigned = [u32; 2];
+  type AsSigned = [i32; 2];
+}
+impl ExprIntegralDataType for [i32; 3] {
+  type AsUnsigned = [u32; 3];
+  type AsSigned = [i32; 3];
+}
+impl ExprIntegralDataType for [i32; 4] {
+  type AsUnsigned = [u32; 4];
+  type AsSigned = [i32; 4];
+}
+
+impl ExprIntegralDataType for u32 {
+  type AsUnsigned = u32;
+  type AsSigned = i32;
+}
+impl ExprIntegralDataType for [u32; 2] {
+  type AsUnsigned = [u32; 2];
+  type AsSigned = [i32; 2];
+}
+impl ExprIntegralDataType for [u32; 3] {
+  type AsUnsigned = [u32; 3];
+  type AsSigned = [i32; 3];
+}
+impl ExprIntegralDataType for [u32; 4] {
+  type AsUnsigned = [u32; 4];
+  type AsSigned = [i32; 4];
+}

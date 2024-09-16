@@ -1,7 +1,9 @@
 mod buffer_binding;
 mod code_block;
+mod data_type_collector;
 mod entry_point;
 mod expression;
+mod function;
 mod identifier;
 mod lvalue;
 mod shader;
@@ -10,6 +12,7 @@ mod statement;
 pub(crate) use self::{
   buffer_binding::BufferBindingModel,
   code_block::CodeBlockModel,
+  data_type_collector::DataTypeCollector,
   entry_point::EntryPointModel,
   expression::{
     BufferReadExprModel,
@@ -18,9 +21,12 @@ pub(crate) use self::{
     CmpOp,
     CmpOpExprModel,
     ExpressionModel,
+    FunctionCallExprModel,
     IdentifierExprModel,
     LiteralExprModel,
+    StructFieldReadModel,
   },
+  function::FunctionModel,
   identifier::IdentifierModel,
   lvalue::LvalueModel,
   shader::ShaderModel,

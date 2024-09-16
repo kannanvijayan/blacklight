@@ -1,6 +1,9 @@
-use crate::api::{
-  buffer_disposition::BufferDispositionRepr,
-  data_type::DataTypeRepr,
+use crate::{
+  api::{
+    buffer_disposition::BufferDispositionRepr,
+    data_type::DataTypeRepr,
+  },
+  model::{ IdentifierModel, DataTypeCollector },
 };
 
 /**
@@ -9,7 +12,7 @@ use crate::api::{
 #[derive(Clone, Debug)]
 pub struct BufferBindingModel {
   // The name of the buffer binding.
-  name: String,
+  name: IdentifierModel,
 
   // The group of the buffer binding.
   group: u32,
@@ -26,7 +29,7 @@ pub struct BufferBindingModel {
 impl BufferBindingModel {
   /** Create a new buffer binding. */
   pub(crate) fn new(
-    name: String,
+    name: IdentifierModel,
     group: u32,
     index: u32,
     data_type: DataTypeRepr,
@@ -42,7 +45,7 @@ impl BufferBindingModel {
   }
 
   /** Get the name of the buffer binding. */
-  pub(crate) fn name(&self) -> &str {
+  pub(crate) fn name(&self) -> &IdentifierModel {
     &self.name
   }
 
@@ -64,5 +67,12 @@ impl BufferBindingModel {
   /** Get the disposition of the buffer binding. */
   pub(crate) fn disposition(&self) -> BufferDispositionRepr {
     self.disposition
+  }
+
+  /** Collect struct data types reference by this buffer into a vector. */
+  pub(crate) fn collect_struct_data_types_into(&self,
+    collector: &mut DataTypeCollector,
+  ) {
+    collector.add_data_type(self.data_type.clone());
   }
 }

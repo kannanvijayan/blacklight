@@ -1,8 +1,9 @@
 use crate::{
   api::data_type::StructDataTypeRepr,
   model::{
-    EntryPointModel,
     BufferBindingModel,
+    EntryPointModel,
+    FunctionModel,
   },
 };
 
@@ -13,6 +14,7 @@ use crate::{
 pub(crate) struct ShaderModel {
   struct_data_types: Vec<StructDataTypeRepr>,
   buffer_bindings: Vec<BufferBindingModel>,
+  functions: Vec<FunctionModel>,
   entrypoints: Vec<EntryPointModel>,
 }
 impl ShaderModel {
@@ -20,9 +22,10 @@ impl ShaderModel {
   pub(crate) fn new(
     struct_data_types: Vec<StructDataTypeRepr>,
     buffer_bindings: Vec<BufferBindingModel>,
+    functions: Vec<FunctionModel>,
     entrypoints: Vec<EntryPointModel>,
   ) -> Self {
-    ShaderModel { struct_data_types, buffer_bindings, entrypoints }
+    ShaderModel { struct_data_types, buffer_bindings, functions, entrypoints }
   }
 
   /** Get the struct data types. */
@@ -33,6 +36,11 @@ impl ShaderModel {
   /** Get the buffer bindings. */
   pub(crate) fn buffer_bindings(&self) -> &[BufferBindingModel] {
     &self.buffer_bindings
+  }
+
+  /** Get the functions */
+  pub(crate) fn functions(&self) -> &[FunctionModel] {
+    &self.functions
   }
 
   /** Get the entrypoints. */

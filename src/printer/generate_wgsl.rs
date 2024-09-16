@@ -17,6 +17,7 @@ use crate::{
     ShaderModel,
     StatementModel,
     VarDeclStmtModel,
+    FunctionModel,
   },
   printer::GeneratorBuffer
 };
@@ -42,7 +43,7 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
   gen.write_line("/// Type bindings.");
   gen.newline();
   for struct_data_type in model.struct_data_types() {
-    gen.write_line(format!("struct {} {{", struct_data_type.name()));
+    gen.write_line(format!("struct {} {{", struct_data_type.name().as_str()));
     gen.with_indent(|gen| {
       for field in struct_data_type.fields() {
         gen.write_line(format!("{}: {},",
@@ -61,6 +62,15 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
   gen.newline();
   for buffer_binding in model.buffer_bindings() {
     gen_buffer_binding(&mut gen, buffer_binding);
+    gen.newline();
+  }
+
+  // Write out function definitions.
+  gen.write_line(LONG_COMMENT_BAR);
+  gen.write_line("/// Function definitions.");
+  gen.newline();
+  for function in model.functions() {
+    gen_function_binding(&mut gen, function);
     gen.newline();
   }
 
@@ -83,9 +93,30 @@ fn gen_buffer_binding(gen: &mut GeneratorBuffer, buffer_binding: &BufferBindingM
   gen.write_line(format!("@group({}) @binding({})", group, index));
   gen.write_line(format!("var<storage, {}> {}: array<{}>;",
     disposition.as_str(),
-    buffer_binding.name(),
+    buffer_binding.name().as_str(),
     buffer_binding.data_type().wgsl_source(),
   ));
+}
+
+fn gen_function_binding(gen: &mut GeneratorBuffer, function: &FunctionModel) {
+  gen.write_line(format!("fn {}(", function.name().as_str()));
+  gen.with_indent(|gen| {
+    for (i, arg_name) in function.arg_names().iter().enumerate() {
+      gen.write_line(format!("{}: {},",
+        arg_name.as_str(),
+        function.arg_data_types()[i].wgsl_source(),
+      ));
+    }
+  });
+  gen.write_start(")");
+  if let Some(return_data_type) = function.return_data_type() {
+    gen.write(format!(" -> {}", return_data_type.wgsl_source()));
+  }
+  gen.write_end(" {");
+  gen.with_indent(|gen| {
+    gen_code_block(gen, function.code_block());
+  });
+  gen.write_line("}");
 }
 
 fn gen_entrypoint(gen: &mut GeneratorBuffer, entrypoint: &EntryPointModel) {
@@ -137,7 +168,7 @@ fn gen_statement(gen: &mut GeneratorBuffer, stmt: &StatementModel) {
 
 fn gen_var_decl(gen: &mut GeneratorBuffer, var_decl: &VarDeclStmtModel) {
   gen.write_start(format!("var {}: {} = ",
-    var_decl.name(),
+    var_decl.name().as_str(),
     var_decl.data_type().wgsl_source(),
   ));
   gen_expression(gen, var_decl.expression());
@@ -155,13 +186,17 @@ fn gen_assign_stmt(gen: &mut GeneratorBuffer, assign_stmt: &AssignStmtModel) {
 fn gen_lvalue_expr(gen: &mut GeneratorBuffer, lvalue: &LvalueModel) {
   match lvalue {
     LvalueModel::Variable(var_name, _) => {
-      gen.write(var_name);
+      gen.write(var_name.as_str());
     },
     LvalueModel::BufferElement(buffer_name, index_expr, _) => {
-      gen.write(format!("{}[", buffer_name));
+      gen.write(format!("{}[", buffer_name.as_str()));
       gen_expression(gen, index_expr);
       gen.write("]");
     },
+    LvalueModel::StructField(struct_expr, field_name, _) => {
+      gen_expression(gen, struct_expr);
+      gen.write(format!(".{}", field_name.as_str()));
+    }
   }
 }
 
@@ -215,10 +250,28 @@ fn gen_expression(gen: &mut GeneratorBuffer, expr: &ExpressionModel) {
       gen.write(")");
     },
     ExpressionModel::BufferRead(buffer_read_expr) => {
-      gen.write(buffer_read_expr.buffer_name());
+      gen.write(buffer_read_expr.buffer_name().as_str());
       gen.write("[");
       gen_expression(gen, buffer_read_expr.index());
       gen.write("]");
+    },
+    ExpressionModel::StructFieldRead(struct_field_read) => {
+      gen_expression(gen, struct_field_read.struct_expr());
+      gen.write(".");
+      gen.write(struct_field_read.field_name().as_str());
+    },
+    ExpressionModel::FunctionCall(fucntion_call) => {
+      gen.write(fucntion_call.function_name().as_str());
+      gen.write("(");
+      let arguments = fucntion_call.arguments();
+      let argcount = arguments.len();
+      for (i, arg_expr) in arguments.iter().enumerate() {
+        gen_expression(gen, arg_expr.as_ref());
+        if i < argcount - 1 {
+          gen.write(", ");
+        }
+      }
+      gen.write(")");
     },
   }
 }
@@ -229,7 +282,7 @@ fn gen_literal_data_value(gen: &mut GeneratorBuffer, literal_data_value: &Litera
       gen.write(if *b { "true" } else { "false" });
     },
     LiteralDataValue::I32(int32) => {
-      gen.write(int32.to_string());
+      gen.write(format!("{}i", int32));
     },
     LiteralDataValue::Vec2I32([x, y]) => {
       gen.write(format!("vec2<i32>({}, {})", x, y));
@@ -241,7 +294,7 @@ fn gen_literal_data_value(gen: &mut GeneratorBuffer, literal_data_value: &Litera
       gen.write(format!("vec4<i32>({}, {}, {}, {})", x, y, z, w));
     },
     LiteralDataValue::U32(uint32) => {
-      gen.write(uint32.to_string());
+      gen.write(format!("{}u", uint32));
     },
     LiteralDataValue::Vec2U32([x, y]) => {
       gen.write(format!("vec2<u32>({}, {})", x, y));
@@ -253,7 +306,7 @@ fn gen_literal_data_value(gen: &mut GeneratorBuffer, literal_data_value: &Litera
       gen.write(format!("vec4<u32>({}, {}, {}, {})", x, y, z, w));
     },
     LiteralDataValue::F32(float32) => {
-      gen.write(float32.to_string());
+      gen.write(format!("{}f", float32));
     },
     LiteralDataValue::Vec2F32([x, y]) => {
       gen.write(format!("vec2<f32>({}, {})", x, y));

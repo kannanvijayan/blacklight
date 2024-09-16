@@ -1,5 +1,4 @@
 use crate::api::data_type::{
-  DataTypeRepr,
   ExprDataType,
   Struct,
   StructMappedDataType,

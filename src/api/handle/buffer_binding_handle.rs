@@ -5,8 +5,7 @@ use crate::{
     data_type::HostShareableDataType,
     handle::{ ExprHandle, LvalueHandle },
   },
-  data_type::VarDataType,
-  model::LvalueModel,
+  model::{ IdentifierModel, LvalueModel },
 };
 
 /**
@@ -16,15 +15,15 @@ use crate::{
 pub struct BufferBindingHandle<'sh, DT, DISP>
   where DT: HostShareableDataType, DISP: BufferDisposition
 {
-  name: String,
+  name: IdentifierModel,
   _phantom: PhantomData<&'sh (DT, DISP)>,
 }
 impl<'sh, DT, DISP> BufferBindingHandle<'sh, DT, DISP>
   where DT: HostShareableDataType, DISP: BufferDisposition
 {
   /** Create a new buffer binding handle. */
-  pub(crate) fn new(name: String) -> Self {
-    BufferBindingHandle { name: name, _phantom: PhantomData }
+  pub(crate) fn new(name: IdentifierModel) -> Self {
+    BufferBindingHandle { name, _phantom: PhantomData }
   }
 
   /**
@@ -35,7 +34,7 @@ impl<'sh, DT, DISP> BufferBindingHandle<'sh, DT, DISP>
    */
   pub fn elem<'cb>(&self, index: ExprHandle<'cb, u32>)
     -> LvalueHandle<'cb, DT>
-  where DT: VarDataType,
+  where DT: HostShareableDataType,
         'sh: 'cb,
   {
     let lvalue_model =

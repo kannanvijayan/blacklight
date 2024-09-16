@@ -1,16 +1,16 @@
 use std::marker::PhantomData;
 use crate::{
   api::{
+    data_type::{ ExprDataType, ProcResultType },
     handle::{ ExprHandle, LvalueHandle },
-    data_type::{ ExprDataType, LiteralDataType, ProcResultType, VarDataType }
   },
+  data_type::HostShareableDataType,
   model::{
     AssignStmtModel,
     CodeBlockModel,
     ExprStmtModel,
-    ExpressionModel,
+    IdentifierModel,
     IfElseStmtModel,
-    LiteralExprModel,
     LvalueModel,
     ReturnStmtModel,
     StatementModel,
@@ -37,6 +37,14 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
       statements: Vec::new(),
       _phantom: PhantomData,
     }
+  }
+
+  fn build_sub_code_block<B>(&mut self, builder_func: B) -> CodeBlockModel
+    where B: FnOnce(&mut CodeBlockBuilder<'sh, 'sh, ReturnT>),
+  {
+    let mut code_block_builder = CodeBlockBuilder::new();
+    builder_func(&mut code_block_builder);
+    code_block_builder.build()
   }
 
   /** Build an entrypoint from the definition provided. */
@@ -67,7 +75,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * the same block as the return statement itself, as indicated by the
    * lifetime constriant `cb`.
    */
-  pub fn add_return_statement<DT>(&mut self, expr: ExprHandle<'cb, ReturnT>)
+  pub fn add_return_statement(&mut self, expr: ExprHandle<'cb, ReturnT>)
     where ReturnT: ExprDataType
   {
     let return_stmt_model = ReturnStmtModel::new(Some(expr.model));
@@ -87,12 +95,14 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     name: &str,
     expr: ExprHandle<'cb, DT>,
   ) -> LvalueHandle<'cb, DT>
-    where DT: VarDataType
+    where DT: HostShareableDataType
   {
-    let var_decl_stmt_model = VarDeclStmtModel::new(name.to_string(), expr.model);
+    let identifier_model = IdentifierModel::new(name);
+
+    let var_decl_stmt_model = VarDeclStmtModel::new(identifier_model.clone(), expr.model);
     self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
 
-    let lvalue_var_model = LvalueModel::new_variable(name.to_string(), DT::repr());
+    let lvalue_var_model = LvalueModel::new_variable(identifier_model, DT::repr());
     LvalueHandle::new(lvalue_var_model)
   }
 
@@ -103,7 +113,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     lvalue: &LvalueHandle<'cb, DT>,
     expr: ExprHandle<'cb, DT>,
   )
-    where DT: VarDataType
+    where DT: HostShareableDataType
   {
     let assign_stmt_model = AssignStmtModel::new(
       lvalue.model().clone(),
@@ -120,17 +130,11 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     if_builder: IfB,
     else_builder: ElseB,
   ) where
-    IfB: for <'if_cb> FnOnce(&mut CodeBlockBuilder<'if_cb, 'sh, ()>),
-    ElseB: for <'else_cb> FnOnce(&mut CodeBlockBuilder<'else_cb, 'sh, ()>),
+    IfB: for <'if_cb> FnOnce(&mut CodeBlockBuilder<'if_cb, 'sh, ReturnT>),
+    ElseB: for <'else_cb> FnOnce(&mut CodeBlockBuilder<'else_cb, 'sh, ReturnT>),
   {
-    let mut if_block_builder = CodeBlockBuilder::new();
-    if_builder(&mut if_block_builder);
-    let if_block = if_block_builder.build();
-
-    let mut else_block_builder = CodeBlockBuilder::new();
-    else_builder(&mut else_block_builder);
-    let else_block = else_block_builder.build();
-
+    let if_block = self.build_sub_code_block(if_builder);
+    let else_block = self.build_sub_code_block(else_builder);
     let if_else_stmt =
       IfElseStmtModel::new(condition.model, if_block, Some(else_block));
     self.statements.push(StatementModel::IfElse(if_else_stmt));
@@ -143,25 +147,12 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
     condition: ExprHandle<'cb, bool>,
     if_builder: IfB,
   ) where
-    IfB: FnOnce(&mut CodeBlockBuilder<'cb, 'sh, ()>)
+    IfB: for <'if_cb> FnOnce(&mut CodeBlockBuilder<'if_cb, 'sh, ReturnT>)
   {
-    let mut if_block_builder = CodeBlockBuilder::new();
-    if_builder(&mut if_block_builder);
-    let if_block = if_block_builder.build();
+    let if_block = self.build_sub_code_block(if_builder);
 
     let if_else_stmt = IfElseStmtModel::new(condition.model, if_block, None);
     self.statements.push(StatementModel::IfElse(if_else_stmt));
-  }
-
-  /**
-   * Create a new literal expression.
-   */
-  pub fn literal_expr<DT>(&self, value: DT) -> ExprHandle<'cb, DT>
-    where DT: LiteralDataType
-  {
-    let literal_value = value.to_sh_literal_data_value();
-    let literal_expr_model = LiteralExprModel::new(literal_value);
-    ExprHandle::new(ExpressionModel::Literal(literal_expr_model))
   }
 }
 

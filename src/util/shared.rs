@@ -3,6 +3,7 @@ use std::{
   fmt::Debug,
   ops::Deref,
   rc::Rc,
+  hash::Hash,
 };
 
 /**
@@ -46,5 +47,11 @@ impl<T: 'static> Debug for Shared<T> where T: Debug
 {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "Shared({:?})", self.inner)
+  }
+}
+impl<T: 'static + Hash> Hash for Shared<T>
+{
+  fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    self.inner.hash(state)
   }
 }
