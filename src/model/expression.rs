@@ -17,30 +17,6 @@ pub(crate) enum ExpressionModel {
   FunctionCall(FunctionCallExprModel),
 }
 impl ExpressionModel {
-  pub(crate) fn data_type(&self) -> DataTypeRepr {
-    match self {
-      ExpressionModel::Literal(literal_expr) => {
-        literal_expr.value().data_type_repr()
-      },
-      ExpressionModel::Identifier(identifier_expr) => {
-        identifier_expr.data_type().clone()
-      },
-      ExpressionModel::CmpOp(_) => DataTypeRepr::new_bool(),
-      ExpressionModel::BinOp(bin_op_expr) => {
-        bin_op_expr.lhs().data_type().clone()
-      },
-      ExpressionModel::BufferRead(buffer_read_expr) => {
-        buffer_read_expr.data_type().clone()
-      },
-      ExpressionModel::StructFieldRead(struct_field_read) => {
-        struct_field_read.data_type().clone()
-      },
-      ExpressionModel::FunctionCall(function_call) => {
-        function_call.return_data_type().clone()
-      },
-    }
-  }
-
   /** Collect struct data types reference by this buffer into a vector. */
   pub(crate) fn collect_struct_data_types_into(&self,
     collector: &mut DataTypeCollector,

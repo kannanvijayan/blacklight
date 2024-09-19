@@ -35,3 +35,18 @@ impl BufferDispositionRepr {
     }
   }
 }
+
+/**
+ * Buffer memory space.
+ */
+#[derive(Clone, Copy, Debug)]
+pub enum BufferMemorySpaceRepr { Storage, Uniform }
+impl BufferMemorySpaceRepr {
+  /** Get the string representation of the buffer memory space. */
+  pub fn as_str(&self) -> &'static str {
+    match self {
+      BufferMemorySpaceRepr::Storage => "storage",
+      BufferMemorySpaceRepr::Uniform => "uniform",
+    }
+  }
+}

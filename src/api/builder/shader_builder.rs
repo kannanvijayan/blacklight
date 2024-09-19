@@ -4,14 +4,17 @@ use std::{
 };
 use crate::{
   api::{
-    buffer_disposition::{ BufferRead, BufferReadWrite, BufferWrite },
+    buffer_attributes::{ BufferRead, BufferReadWrite, BufferWrite },
     builder::CodeBlockBuilder,
     data_type::{
       ArgTupleDataType,
       ArgTupleHandleMap,
       EntryPointArgDataType,
       HostShareableDataType,
+      LiteralDataType,
+      Struct,
       StructDataTypeRepr,
+      StructMappedDataType,
       ProcResultType,
     },
     handle::{ BufferBindingHandle, ExprHandle, FunctionHandle },
@@ -19,7 +22,7 @@ use crate::{
     Project,
     Shader,
   },
-  buffer_disposition::BufferDisposition,
+  buffer_attributes::{ BufferDisposition, BufferMemorySpaceRepr },
   model::{
     BufferBindingModel,
     CodeBlockModel,
@@ -29,27 +32,38 @@ use crate::{
     FunctionModel,
     IdentifierExprModel,
     IdentifierModel,
+    LiteralExprModel,
     ShaderModel,
+    VariableBindingModel,
+    VariableBindingDisposition,
   }
 };
 
 /**
  * A builder helper for defining shaders.
  */
-pub struct ShaderBuilder<'sh, 'pr: 'sh> {
+pub struct ShaderBuilder<'sh, 'pr: 'sh, UDT>
+  where UDT: StructMappedDataType
+{
   _project: &'pr Project,
+  uniform_struct_data_type: StructDataTypeRepr,
   functions: Vec<FunctionModel>,
   buffer_bindings: Vec<BufferBindingModel>,
+  const_definitions: Vec<VariableBindingModel>,
   entrypoints: Vec<EntryPointModel>,
   used_buffer_bindings: HashSet<(u32, u32)>,
-  _phantom: PhantomData<& 'sh ()>
+  _phantom: PhantomData<& 'sh UDT>
 }
-impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
+impl<'sh, 'pr: 'sh, UDT> ShaderBuilder<'sh, 'pr, UDT>
+  where UDT: StructMappedDataType
+{
   /** Create a new shader builder for the given project builder. */
   pub(crate) fn new(project: &'pr Project) -> Self {
     ShaderBuilder {
       _project: project,
+      uniform_struct_data_type: Struct::<UDT>::make_struct_repr(),
       buffer_bindings: Vec::new(),
+      const_definitions: Vec::new(),
       functions: Vec::new(),
       entrypoints: Vec::new(),
       used_buffer_bindings: HashSet::new(),
@@ -64,6 +78,22 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     let mut code_block_builder = CodeBlockBuilder::new();
     builder_func(&mut code_block_builder);
     code_block_builder.build()
+  }
+
+  /** Define a new constant. */
+  pub fn define_constant<DT>(&mut self, name: &'static str, value: DT)
+    where DT: LiteralDataType
+  {
+    let identifier_model = IdentifierModel::new(name);
+    let literal_value = value.to_literal_data_value();
+    let literal_expr_model = LiteralExprModel::new(literal_value);
+    let const_definition_model = VariableBindingModel::new(
+      identifier_model,
+      VariableBindingDisposition::Const,
+      DT::repr(),
+      Some(Box::new(ExpressionModel::Literal(literal_expr_model)))
+    );
+    self.const_definitions.push(const_definition_model);
   }
 
   /** Define a new shader function. */
@@ -173,10 +203,12 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
     // Ensure that the 
     let buffer_binding_model = BufferBindingModel::new(
       identifier_model.clone(),
+      BufferMemorySpaceRepr::Storage,
+      DISP::REPR,
       group,
       index,
       dt_repr,
-      DISP::REPR,
+      /* is_singleton */ false
     );
     self.buffer_bindings.push(buffer_binding_model);
     self.used_buffer_bindings.insert((group, index));
@@ -184,11 +216,13 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
   }
 
   /** Build the shader from the definitions provided. */
-  pub(crate) fn build(self) -> Shader {
+  pub(crate) fn build(self) -> Shader<UDT> {
     let shader_model =
       ShaderModel::new(
         self.collect_struct_data_types(),
+        Struct::<UDT>::make_struct_repr(),
         self.buffer_bindings,
+        self.const_definitions,
         self.functions,
         self.entrypoints
       );
@@ -206,6 +240,7 @@ impl<'sh, 'pr: 'sh> ShaderBuilder<'sh, 'pr> {
   }
 
   fn collect_struct_data_types_into(&self, collector: &mut DataTypeCollector) {
+    collector.add_struct_data_type(self.uniform_struct_data_type.clone());
     for function in &self.functions {
       function.collect_struct_data_types_into(collector);
     }

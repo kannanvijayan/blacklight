@@ -1,12 +1,6 @@
 use crate::{
   api::data_type::DataTypeRepr,
-  model::{
-    BufferReadExprModel,
-    ExpressionModel,
-    IdentifierExprModel,
-    IdentifierModel,
-    StructFieldReadModel,
-  },
+  model::{ ExpressionModel, IdentifierModel },
 };
 
 /**
@@ -48,35 +42,5 @@ impl LvalueModel {
     data_type: DataTypeRepr,
   ) -> Self {
     LvalueModel::StructField(base, field_name, data_type)
-  }
-
-  /** Create a read expression model for this lvalue. */
-  pub(crate) fn read_expr(&self) -> ExpressionModel {
-    match self {
-      LvalueModel::Variable(name, data_type) => {
-        let identifier_expr_model = IdentifierExprModel::new(
-          name.clone(),
-          data_type.clone(),
-        );
-        ExpressionModel::Identifier(identifier_expr_model)
-      },
-      LvalueModel::BufferElement(buffer_name, index, data_type) => {
-        let buffer_read_expr_model =
-          BufferReadExprModel::new(
-            buffer_name.clone(),
-            index.clone(),
-            data_type.clone()
-          );
-        ExpressionModel::BufferRead(buffer_read_expr_model)
-      },
-      LvalueModel::StructField(base, field_name, data_type) => {
-        let struct_field_read_model = StructFieldReadModel::new(
-          base.clone(),
-          field_name.clone(),
-          data_type.clone()
-        );
-        ExpressionModel::StructFieldRead(struct_field_read_model)
-      },
-    }
   }
 }

@@ -2,7 +2,12 @@ use std::marker::PhantomData;
 use crate::{
   api::{
     data_type::{ ExprDataType, ProcResultType },
-    handle::{ ExprHandle, LvalueHandle },
+    handle::{ ExprHandle, LvalueHandle, VariableBindingHandle },
+    variable_attributes::{
+      VariableMutability,
+      VariableRead,
+      VariableReadWrite,
+    },
   },
   data_type::HostShareableDataType,
   model::{
@@ -11,10 +16,11 @@ use crate::{
     ExprStmtModel,
     IdentifierModel,
     IfElseStmtModel,
-    LvalueModel,
     ReturnStmtModel,
     StatementModel,
     VarDeclStmtModel,
+    VariableBindingDisposition,
+    VariableBindingModel,
   },
 };
 
@@ -83,7 +89,7 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
   }
 
   /**
-   * Add a new variable declaration statement.
+   * Add a new let or var declaration statement.
    * 
    * Returns an expression handle referencing the declared variable.
    *
@@ -91,19 +97,48 @@ impl<'cb, 'sh: 'cb, ReturnT> CodeBlockBuilder<'cb, 'sh, ReturnT>
    * constructed within the same block as the return statement itself,
    * as indicated by the lifetime constriant `cb`.
    */
+  fn add_decl_statement<DT, MUT>(&mut self,
+    binding_disposition: VariableBindingDisposition,
+    name: &str,
+    expr: ExprHandle<'cb, DT>,
+  ) -> VariableBindingHandle<'cb, DT, MUT>
+    where DT: ExprDataType,
+          MUT: VariableMutability
+  {
+    let identifier_model = IdentifierModel::new(name);
+    let var_binding_model = VariableBindingModel::new(
+      identifier_model.clone(),
+      binding_disposition,
+      DT::repr(),
+      Some(expr.model)
+    );
+    let var_decl_stmt_model = VarDeclStmtModel::new(var_binding_model);
+    self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
+    VariableBindingHandle::new(identifier_model)
+  }
+
+  /**
+   * Add a new variable declaration statement.
+   */
   pub fn add_var_decl_statement<DT>(&mut self,
     name: &str,
     expr: ExprHandle<'cb, DT>,
-  ) -> LvalueHandle<'cb, DT>
+  ) -> VariableBindingHandle<'cb, DT, VariableReadWrite>
+    where DT: ExprDataType
+  {
+    self.add_decl_statement(VariableBindingDisposition::Var, name, expr)
+  }
+
+  /**
+   * Add a new let declaration statement.
+   */
+  pub fn add_let_decl_statement<DT>(&mut self,
+    name: &str,
+    expr: ExprHandle<'cb, DT>,
+  ) -> VariableBindingHandle<'cb, DT, VariableRead>
     where DT: HostShareableDataType
   {
-    let identifier_model = IdentifierModel::new(name);
-
-    let var_decl_stmt_model = VarDeclStmtModel::new(identifier_model.clone(), expr.model);
-    self.statements.push(StatementModel::VarDecl(var_decl_stmt_model));
-
-    let lvalue_var_model = LvalueModel::new_variable(identifier_model, DT::repr());
-    LvalueHandle::new(lvalue_var_model)
+    self.add_decl_statement(VariableBindingDisposition::Let, name, expr)
   }
 
   /**

@@ -20,7 +20,7 @@ use crate::{
 pub fn literal<'cb, DT>(value: DT) -> ExprHandle<'cb, DT>
   where DT: LiteralDataType
 {
-  let literal_value = value.to_sh_literal_data_value();
+  let literal_value = value.to_literal_data_value();
   let literal_expr_model = LiteralExprModel::new(literal_value);
   ExprHandle::new(Box::new(ExpressionModel::Literal(literal_expr_model)))
 }

@@ -1,6 +1,6 @@
 use crate::{
   api::{
-    buffer_disposition::BufferDispositionRepr,
+    buffer_attributes::{ BufferDispositionRepr, BufferMemorySpaceRepr },
     data_type::DataTypeRepr,
   },
   model::{ IdentifierModel, DataTypeCollector },
@@ -14,6 +14,12 @@ pub struct BufferBindingModel {
   // The name of the buffer binding.
   name: IdentifierModel,
 
+  // The memory space.
+  memory_space: BufferMemorySpaceRepr,
+
+  // The disposition of the buffer binding.
+  disposition: BufferDispositionRepr,
+
   // The group of the buffer binding.
   group: u32,
 
@@ -23,30 +29,44 @@ pub struct BufferBindingModel {
   // The data type of the buffer binding.
   data_type: DataTypeRepr,
 
-  // The disposition of the buffer binding.
-  disposition: BufferDispositionRepr,
+  // Whether the buffer type is a singleton, not array.
+  is_singleton: bool,
 }
 impl BufferBindingModel {
   /** Create a new buffer binding. */
   pub(crate) fn new(
     name: IdentifierModel,
+    memory_space: BufferMemorySpaceRepr,
+    disposition: BufferDispositionRepr,
     group: u32,
     index: u32,
     data_type: DataTypeRepr,
-    disposition: BufferDispositionRepr,
+    is_singleton: bool,
   ) -> BufferBindingModel {
     BufferBindingModel {
-      name: name,
-      group: group,
-      index: index,
-      data_type: data_type,
-      disposition: disposition,
+      name,
+      memory_space,
+      group,
+      index,
+      data_type,
+      disposition,
+      is_singleton,
     }
   }
 
   /** Get the name of the buffer binding. */
   pub(crate) fn name(&self) -> &IdentifierModel {
     &self.name
+  }
+
+  /** Get the memory space of the buffer binding. */
+  pub(crate) fn memory_space(&self) -> BufferMemorySpaceRepr {
+    self.memory_space
+  }
+
+  /** Get the disposition of the buffer binding. */
+  pub(crate) fn disposition(&self) -> BufferDispositionRepr {
+    self.disposition
   }
 
   /** Get the group of the buffer binding. */
@@ -63,10 +83,10 @@ impl BufferBindingModel {
   pub(crate) fn data_type(&self) -> &DataTypeRepr {
     &self.data_type
   }
-
-  /** Get the disposition of the buffer binding. */
-  pub(crate) fn disposition(&self) -> BufferDispositionRepr {
-    self.disposition
+  
+  /** Check if the buffer contains a singleton entry. */
+  pub(crate) fn is_singleton(&self) -> bool {
+    self.is_singleton
   }
 
   /** Collect struct data types reference by this buffer into a vector. */

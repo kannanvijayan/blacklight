@@ -1,12 +1,9 @@
-use crate::{
-  api::data_type::DataTypeRepr,
-  model::{
-    CodeBlockModel,
-    DataTypeCollector,
-    ExpressionModel,
-    IdentifierModel,
-    LvalueModel,
-  },
+use crate::model::{
+  CodeBlockModel,
+  DataTypeCollector,
+  ExpressionModel,
+  LvalueModel,
+  VariableBindingModel,
 };
 
 /**
@@ -27,7 +24,7 @@ impl StatementModel {
   ) {
     match self {
       StatementModel::VarDecl(var_decl_stmt) => {
-        var_decl_stmt.expression.collect_struct_data_types_into(collector);
+        var_decl_stmt.binding.collect_struct_data_types_into(collector);
       },
       StatementModel::Assign(assign_stmt) => {
         assign_stmt.expression.collect_struct_data_types_into(collector);
@@ -56,31 +53,18 @@ impl StatementModel {
  */
 #[derive(Clone, Debug)]
 pub(crate) struct VarDeclStmtModel {
-  // The name of the variable being declared.
-  name: IdentifierModel,
-
-  // The expression being assigned to the variable.
-  expression: Box<ExpressionModel>,
+  // The underlying variable binding.
+  binding: VariableBindingModel,
 }
 impl VarDeclStmtModel {
   /** Create a new variable declaration statement. */
-  pub(crate) fn new(name: IdentifierModel, expression: Box<ExpressionModel>) -> Self {
-    VarDeclStmtModel { name, expression }
+  pub(crate) fn new(binding: VariableBindingModel) -> Self {
+    VarDeclStmtModel { binding }
   }
 
-  /** Get the name of the variable being declared. */
-  pub(crate) fn name(&self) -> &IdentifierModel {
-    &self.name
-  }
-
-  /** Get the expression being assigned to the variable. */
-  pub(crate) fn expression(&self) -> &Box<ExpressionModel> {
-    &self.expression
-  }
-
-  /** Get the data type for this statement model. */
-  pub(crate) fn data_type(&self) -> DataTypeRepr {
-    self.expression.data_type()
+  /** Get the underlying variable binding. */
+  pub(crate) fn binding(&self) -> &VariableBindingModel {
+    &self.binding
   }
 }
 

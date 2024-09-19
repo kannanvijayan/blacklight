@@ -297,6 +297,31 @@ impl<'cb, DT> ExprHandle<'cb, Struct<DT>>
   }
 
   /** Reference a field from the struct. */
+  pub fn get<FT>(&self, name: &str) -> ExprHandle<'cb, FT>
+    where FT: HostShareableDataType
+  {
+    let struct_repr = Struct::<DT>::make_struct_repr();
+    let maybe_field = struct_repr.get_field(name);
+    let field = match maybe_field {
+      Some(field) => field,
+      None => panic!("Field '{}' not found in struct", name),
+    };
+    let read_repr = FT::repr();
+    if field.data_type() != &read_repr {
+      panic!("Field '{}' has type {:?}, expected {:?}", name, field.data_type(), FT::repr());
+    }
+
+    let ident = IdentifierModel::new(name);
+    let field_read_model = StructFieldReadModel::new(
+      self.model.clone(),
+      ident,
+      read_repr,
+    );
+    let expr_model = ExpressionModel::StructFieldRead(field_read_model);
+    ExprHandle::new(Box::new(expr_model))
+  }
+
+  /** Reference a field from the struct. */
   pub fn field<FT>(&self, name: &str) -> LvalueHandle<'cb, FT>
     where FT: HostShareableDataType
   {

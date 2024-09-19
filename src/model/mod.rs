@@ -8,6 +8,7 @@ mod identifier;
 mod lvalue;
 mod shader;
 mod statement;
+mod variable_binding;
 
 pub(crate) use self::{
   buffer_binding::BufferBindingModel,
@@ -38,4 +39,5 @@ pub(crate) use self::{
     StatementModel,
     VarDeclStmtModel,
   },
+  variable_binding::{ VariableBindingModel, VariableBindingDisposition },
 };

@@ -32,7 +32,10 @@ impl DataTypeCollector {
     self.data_types
   }
 
-  fn add_struct_data_type(&mut self, struct_data_type: StructDataTypeRepr) {
+  /** Add a struct data type to the collector. */
+  pub(crate) fn add_struct_data_type(&mut self,
+    struct_data_type: StructDataTypeRepr,
+  ) {
     if self.seen_names.insert(struct_data_type.name().clone()) {
       for field in struct_data_type.fields() {
         self.add_data_type(field.data_type().clone());

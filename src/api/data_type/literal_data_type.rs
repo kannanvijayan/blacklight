@@ -5,74 +5,74 @@ use crate::api::data_type::{ DataTypeRepr, ExprDataType };
  */
 pub trait LiteralDataType: ExprDataType {
   /** Convert to an `ShLiteralDataValue` */
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue;
+  fn to_literal_data_value(&self) -> LiteralDataValue;
 }
 
 impl LiteralDataType for bool {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Bool(*self)
   }
 }
 
 impl LiteralDataType for i32 {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::I32(*self)
   }
 }
 impl LiteralDataType for [i32; 2] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec2I32(*self)
   }
 }
 impl LiteralDataType for [i32; 3] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec3I32(*self)
   }
 }
 impl LiteralDataType for [i32; 4] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec4I32(*self)
   }
 }
 
 impl LiteralDataType for u32 {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::U32(*self)
   }
 }
 impl LiteralDataType for [u32; 2] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec2U32(*self)
   }
 }
 impl LiteralDataType for [u32; 3] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec3U32(*self)
   }
 }
 impl LiteralDataType for [u32; 4] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec4U32(*self)
   }
 }
 
 impl LiteralDataType for f32 {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::F32(*self)
   }
 }
 impl LiteralDataType for [f32; 2] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec2F32(*self)
   }
 }
 impl LiteralDataType for [f32; 3] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec3F32(*self)
   }
 }
 impl LiteralDataType for [f32; 4] {
-  fn to_sh_literal_data_value(&self) -> LiteralDataValue {
+  fn to_literal_data_value(&self) -> LiteralDataValue {
     LiteralDataValue::Vec4F32(*self)
   }
 }
@@ -113,6 +113,51 @@ impl LiteralDataValue {
       LiteralDataValue::Vec2F32(_) => DataTypeRepr::new_vec2_f32(),
       LiteralDataValue::Vec3F32(_) => DataTypeRepr::new_vec3_f32(),
       LiteralDataValue::Vec4F32(_) => DataTypeRepr::new_vec4_f32(),
+    }
+  }
+
+  /** Generate a wgsl source string for this literal. */
+  pub fn wgsl_source(&self) -> String {
+    match self {
+      LiteralDataValue::Bool(b) => {
+        (if *b { "true" } else { "false" }).to_string()
+      },
+      LiteralDataValue::I32(int32) => {
+        format!("{}i", int32)
+      },
+      LiteralDataValue::Vec2I32([x, y]) => {
+        format!("vec2<i32>({}, {})", x, y)
+      },
+      LiteralDataValue::Vec3I32([x, y, z]) => {
+        format!("vec3<i32>({}, {}, {})", x, y, z)
+      },
+      LiteralDataValue::Vec4I32([x, y, z, w]) => {
+        format!("vec4<i32>({}, {}, {}, {})", x, y, z, w)
+      },
+      LiteralDataValue::U32(uint32) => {
+        format!("{}u", uint32)
+      },
+      LiteralDataValue::Vec2U32([x, y]) => {
+        format!("vec2<u32>({}, {})", x, y)
+      },
+      LiteralDataValue::Vec3U32([x, y, z]) => {
+        format!("vec3<u32>({}, {}, {})", x, y, z)
+      },
+      LiteralDataValue::Vec4U32([x, y, z, w]) => {
+        format!("vec4<u32>({}, {}, {}, {})", x, y, z, w)
+      },
+      LiteralDataValue::F32(float32) => {
+        format!("{}f", float32)
+      },
+      LiteralDataValue::Vec2F32([x, y]) => {
+        format!("vec2<f32>({}, {})", x, y)
+      },
+      LiteralDataValue::Vec3F32([x, y, z]) => {
+        format!("vec3<f32>({}, {}, {})", x, y, z)
+      },
+      LiteralDataValue::Vec4F32([x, y, z, w]) => {
+        format!("vec4<f32>({}, {}, {}, {})", x, y, z, w)
+      },
     }
   }
 }

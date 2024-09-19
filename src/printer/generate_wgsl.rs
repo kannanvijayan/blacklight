@@ -1,7 +1,8 @@
 use crate::{
   api::{
     block_dims::BlockDims,
-    data_type::LiteralDataValue,
+    data_type::{ DataTypeRepr, LiteralDataValue, StructDataTypeRepr },
+    buffer_attributes::{ BufferDispositionRepr, BufferMemorySpaceRepr },
   },
   model::{
     AssignStmtModel,
@@ -11,6 +12,7 @@ use crate::{
     EntryPointModel,
     ExprStmtModel,
     ExpressionModel,
+    IdentifierModel,
     IfElseStmtModel,
     LvalueModel,
     ReturnStmtModel,
@@ -18,6 +20,7 @@ use crate::{
     StatementModel,
     VarDeclStmtModel,
     FunctionModel,
+    VariableBindingModel,
   },
   printer::GeneratorBuffer
 };
@@ -43,18 +46,31 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
   gen.write_line("/// Type bindings.");
   gen.newline();
   for struct_data_type in model.struct_data_types() {
-    gen.write_line(format!("struct {} {{", struct_data_type.name().as_str()));
-    gen.with_indent(|gen| {
-      for field in struct_data_type.fields() {
-        gen.write_line(format!("{}: {},",
-          field.name(),
-          field.data_type().wgsl_source(),
-        ));
-      }
-    });
-    gen.write_line("}");
+    gen_struct_data_type(&mut gen, struct_data_type);
     gen.newline();
   }
+
+  // Write out uniforms type and buffer.
+  gen.write_line(LONG_COMMENT_BAR);
+  gen.write_line("/// Uniforms.");
+  gen.newline();
+  let mut full_uniform_structs = model.full_uniform_structs();
+  for uniform_struct in &full_uniform_structs {
+    gen_struct_data_type(&mut gen, uniform_struct);
+  }
+  let uniform_struct = full_uniform_structs.pop().unwrap();
+  let uniform_buffer_binding =
+    BufferBindingModel::new(
+      IdentifierModel::new("uniforms"),
+      BufferMemorySpaceRepr::Uniform,
+      BufferDispositionRepr::Read,
+      0,
+      0,
+      DataTypeRepr::Struct(uniform_struct),
+      /* is_singleton */ true,
+    );
+  gen_buffer_binding(&mut gen, &uniform_buffer_binding);
+  gen.newline();
 
   // Write out buffer bindings.
   gen.write_line(LONG_COMMENT_BAR);
@@ -64,6 +80,15 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
     gen_buffer_binding(&mut gen, buffer_binding);
     gen.newline();
   }
+
+  // Write out constant definitions.
+  gen.write_line(LONG_COMMENT_BAR);
+  gen.write_line("/// Constant definitions.");
+  gen.newline();
+  for const_def in model.const_definitions() {
+    gen_variable_binding(&mut gen, const_def);
+  }
+  gen.newline();
 
   // Write out function definitions.
   gen.write_line(LONG_COMMENT_BAR);
@@ -86,16 +111,51 @@ pub(crate) fn generate_wgsl(model: &ShaderModel) -> String {
   gen.to_string()
 }
 
+fn gen_struct_data_type(gen: &mut GeneratorBuffer, struct_data_type: &StructDataTypeRepr) {
+  gen.write_line(format!("struct {} {{", struct_data_type.name().as_str()));
+  gen.with_indent(|gen| {
+    for field in struct_data_type.fields() {
+      gen.write_line(format!("{}: {},",
+        field.name(),
+        field.data_type().wgsl_source(),
+      ));
+    }
+  });
+  gen.write_line("}");
+}
+
 fn gen_buffer_binding(gen: &mut GeneratorBuffer, buffer_binding: &BufferBindingModel) {
   let group = buffer_binding.group();
   let index = buffer_binding.index();
+  let memory_space = buffer_binding.memory_space();
   let disposition = buffer_binding.disposition();
   gen.write_line(format!("@group({}) @binding({})", group, index));
-  gen.write_line(format!("var<storage, {}> {}: array<{}>;",
+
+  let type_string = buffer_binding.data_type().wgsl_source();
+  let type_string = if buffer_binding.is_singleton() {
+    type_string.to_string()
+  } else {
+    format!("array<{}>", type_string)
+  };
+  gen.write_line(format!("var<{}, {}> {}: {};",
+    memory_space.as_str(),
     disposition.as_str(),
     buffer_binding.name().as_str(),
-    buffer_binding.data_type().wgsl_source(),
+    type_string,
   ));
+}
+
+fn gen_variable_binding(gen: &mut GeneratorBuffer, variable_binding: &VariableBindingModel) {
+  let initial_value = variable_binding.initial_value();
+  let name_str = variable_binding.name().as_str();
+  let disp_str = variable_binding.disposition().wgsl_source();
+  let data_type_str = variable_binding.data_type().wgsl_source();
+  gen.write_start(format!("{} {}: {}", disp_str, name_str, data_type_str));
+  if let Some(initial_value) = initial_value {
+    gen.write(" = ");
+    gen_expression(gen, initial_value);
+  }
+  gen.write_line(";");
 }
 
 fn gen_function_binding(gen: &mut GeneratorBuffer, function: &FunctionModel) {
@@ -167,12 +227,7 @@ fn gen_statement(gen: &mut GeneratorBuffer, stmt: &StatementModel) {
 }
 
 fn gen_var_decl(gen: &mut GeneratorBuffer, var_decl: &VarDeclStmtModel) {
-  gen.write_start(format!("var {}: {} = ",
-    var_decl.name().as_str(),
-    var_decl.data_type().wgsl_source(),
-  ));
-  gen_expression(gen, var_decl.expression());
-  gen.write_end(";");
+  gen_variable_binding(gen, var_decl.binding());
 }
 
 fn gen_assign_stmt(gen: &mut GeneratorBuffer, assign_stmt: &AssignStmtModel) {
@@ -277,47 +332,7 @@ fn gen_expression(gen: &mut GeneratorBuffer, expr: &ExpressionModel) {
 }
 
 fn gen_literal_data_value(gen: &mut GeneratorBuffer, literal_data_value: &LiteralDataValue) {
-  match literal_data_value {
-    LiteralDataValue::Bool(b) => {
-      gen.write(if *b { "true" } else { "false" });
-    },
-    LiteralDataValue::I32(int32) => {
-      gen.write(format!("{}i", int32));
-    },
-    LiteralDataValue::Vec2I32([x, y]) => {
-      gen.write(format!("vec2<i32>({}, {})", x, y));
-    },
-    LiteralDataValue::Vec3I32([x, y, z]) => {
-      gen.write(format!("vec3<i32>({}, {}, {})", x, y, z));
-    },
-    LiteralDataValue::Vec4I32([x, y, z, w]) => {
-      gen.write(format!("vec4<i32>({}, {}, {}, {})", x, y, z, w));
-    },
-    LiteralDataValue::U32(uint32) => {
-      gen.write(format!("{}u", uint32));
-    },
-    LiteralDataValue::Vec2U32([x, y]) => {
-      gen.write(format!("vec2<u32>({}, {})", x, y));
-    },
-    LiteralDataValue::Vec3U32([x, y, z]) => {
-      gen.write(format!("vec3<u32>({}, {}, {})", x, y, z));
-    },
-    LiteralDataValue::Vec4U32([x, y, z, w]) => {
-      gen.write(format!("vec4<u32>({}, {}, {}, {})", x, y, z, w));
-    },
-    LiteralDataValue::F32(float32) => {
-      gen.write(format!("{}f", float32));
-    },
-    LiteralDataValue::Vec2F32([x, y]) => {
-      gen.write(format!("vec2<f32>({}, {})", x, y));
-    },
-    LiteralDataValue::Vec3F32([x, y, z]) => {
-      gen.write(format!("vec3<f32>({}, {}, {})", x, y, z));
-    },
-    LiteralDataValue::Vec4F32([x, y, z, w]) => {
-      gen.write(format!("vec4<f32>({}, {}, {}, {})", x, y, z, w));
-    },
-  }
+  gen.write(literal_data_value.wgsl_source());
 }
 
 fn gen_cmp_op_expr(gen: &mut GeneratorBuffer, cmp_op_expr: &CmpOpExprModel) {
