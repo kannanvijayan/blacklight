@@ -155,7 +155,7 @@ fn gen_variable_binding(gen: &mut GeneratorBuffer, variable_binding: &VariableBi
     gen.write(" = ");
     gen_expression(gen, initial_value);
   }
-  gen.write_line(";");
+  gen.write_end(";");
 }
 
 fn gen_function_binding(gen: &mut GeneratorBuffer, function: &FunctionModel) {
@@ -321,6 +321,17 @@ fn gen_expression(gen: &mut GeneratorBuffer, expr: &ExpressionModel) {
       let arguments = fucntion_call.arguments();
       let argcount = arguments.len();
       for (i, arg_expr) in arguments.iter().enumerate() {
+        gen_expression(gen, arg_expr.as_ref());
+        if i < argcount - 1 {
+          gen.write(", ");
+        }
+      }
+      gen.write(")");
+    },
+    ExpressionModel::VecConstructor(vec_constructor) => {
+      gen.write(format!("{}(", vec_constructor.data_type().wgsl_source()));
+      let argcount = vec_constructor.components().len();
+      for (i, arg_expr) in vec_constructor.components().iter().enumerate() {
         gen_expression(gen, arg_expr.as_ref());
         if i < argcount - 1 {
           gen.write(", ");

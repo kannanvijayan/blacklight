@@ -7,6 +7,8 @@ use crate::{
     data_type::{
       ExprDataType,
       ExprNumericDataType,
+      ExprScalarNumericDataType,
+      ExprVectorNumericDataType,
       Struct,
       StructMappedDataType,
     },
@@ -22,6 +24,7 @@ use crate::{
     IdentifierModel,
     LvalueModel,
     StructFieldReadModel,
+    VecConstructorExprModel,
   }
 };
 
@@ -88,6 +91,20 @@ impl<'cb, DT: ExprDataType> ExprHandle<'cb, DT> {
     where DT: ExprNumericDataType
   {
     self.cmp(other, CmpOp::Ge)
+  }
+
+  /** Cast scalar to vector. */
+  pub fn to_vec<VDT>(&self) -> ExprHandle<'cb, VDT>
+    where DT: ExprScalarNumericDataType,
+          VDT: ExprVectorNumericDataType,
+  {
+    let vec_constructor_model = VecConstructorExprModel::new(
+      VDT::DIMS,
+      DT::repr(),
+      vec![self.model.clone()],
+    );
+    let model = ExpressionModel::VecConstructor(vec_constructor_model);
+    ExprHandle::new(Box::new(model))
   }
 }
 impl<'cb, DT: ExprDataType> Clone for ExprHandle<'cb, DT> {
@@ -156,7 +173,7 @@ macro_rules! impl_binop_sametype_bit_bulk {
 
 // Bulk-implementation of vector-scalar arith operators.
 macro_rules! impl_binop_vec_scalar_arith_bulk {
-  ($($vecfield:ty, $scalar:ty),*) => {
+  ($(($vecfield:ty, $scalar:ty)),*) => {
     $(
       impl_binop!(Add, $vecfield, $scalar, $vecfield, add, BinOp::Add);
       impl_binop!(Sub, $vecfield, $scalar, $vecfield, sub, BinOp::Sub);
@@ -169,7 +186,7 @@ macro_rules! impl_binop_vec_scalar_arith_bulk {
 
 // Bulk-implementation of vector-scalar bit operators.
 macro_rules! impl_binop_vec_scalar_bit_bulk {
-  ($($vecfield:ty, $scalar:ty),*) => {
+  ($(($vecfield:ty, $scalar:ty)),*) => {
     $(
       impl_binop!(BitOr, $vecfield, $scalar, $vecfield, bitor, BinOp::BitOr);
       impl_binop!(BitAnd, $vecfield, $scalar, $vecfield, bitand, BinOp::BitAnd);
@@ -180,7 +197,7 @@ macro_rules! impl_binop_vec_scalar_bit_bulk {
 
 // Bulk-implementation of shift operators.
 macro_rules! impl_binop_vec_scalar_shift_bulk {
-  ($($lhs:ty, $rhs:ty),*) => {
+  ($(($lhs:ty, $rhs:ty)),*) => {
     $(
       impl_binop!(Shl, $lhs, $rhs, $lhs, shl, BinOp::Shl);
       impl_binop!(Shr, $lhs, $rhs, $lhs, shr, BinOp::Shr);
@@ -196,75 +213,75 @@ impl_binop_sametype_bit_bulk!(u32, [u32; 2], [u32; 3], [u32; 4]);
 impl_binop_sametype_bit_bulk!(i32, [i32; 2], [i32; 3], [i32; 4]);
 
 impl_binop_vec_scalar_arith_bulk!(
-  [u32; 2], u32,
-  [u32; 3], u32,
-  [u32; 4], u32,
+  ([u32; 2], u32),
+  ([u32; 3], u32),
+  ([u32; 4], u32),
 
-  [i32; 2], i32,
-  [i32; 3], i32,
-  [i32; 4], i32,
+  ([i32; 2], i32),
+  ([i32; 3], i32),
+  ([i32; 4], i32),
 
-  [f32; 2], f32,
-  [f32; 3], f32,
-  [f32; 4], f32,
+  ([f32; 2], f32),
+  ([f32; 3], f32),
+  ([f32; 4], f32),
 
-  u32, [u32; 2],
-  u32, [u32; 3],
-  u32, [u32; 4],
+  (u32, [u32; 2]),
+  (u32, [u32; 3]),
+  (u32, [u32; 4]),
 
-  i32, [i32; 2],
-  i32, [i32; 3],
-  i32, [i32; 4],
+  (i32, [i32; 2]),
+  (i32, [i32; 3]),
+  (i32, [i32; 4]),
 
-  f32, [f32; 2],
-  f32, [f32; 3],
-  f32, [f32; 4]
+  (f32, [f32; 2]),
+  (f32, [f32; 3]),
+  (f32, [f32; 4])
 );
 
 impl_binop_vec_scalar_bit_bulk!(
-  [u32; 2], u32,
-  [u32; 3], u32,
-  [u32; 4], u32,
+  ([u32; 2], u32),
+  ([u32; 3], u32),
+  ([u32; 4], u32),
 
-  [i32; 2], i32,
-  [i32; 3], i32,
-  [i32; 4], i32,
+  ([i32; 2], i32),
+  ([i32; 3], i32),
+  ([i32; 4], i32),
 
-  u32, [u32; 2],
-  u32, [u32; 3],
-  u32, [u32; 4],
+  (u32, [u32; 2]),
+  (u32, [u32; 3]),
+  (u32, [u32; 4]),
 
-  i32, [i32; 2],
-  i32, [i32; 3],
-  i32, [i32; 4]
+  (i32, [i32; 2]),
+  (i32, [i32; 3]),
+  (i32, [i32; 4])
 );
 
 impl_binop_vec_scalar_shift_bulk!(
-  u32, u32,
-  [u32; 2], u32,
-  [u32; 3], u32,
-  [u32; 4], u32,
+  (u32, u32),
+  ([u32; 2], u32),
+  ([u32; 3], u32),
+  ([u32; 4], u32),
 
-  [u32; 2], [u32; 2],
-  [u32; 3], [u32; 3],
-  [u32; 4], [u32; 4],
+  ([u32; 2], [u32; 2]),
+  ([u32; 3], [u32; 3]),
+  ([u32; 4], [u32; 4]),
 
-  i32, u32,
-  [i32; 2], u32,
-  [i32; 3], u32,
-  [i32; 4], u32,
+  (i32, u32),
+  ([i32; 2], u32),
+  ([i32; 3], u32),
+  ([i32; 4], u32),
 
-  [i32; 2], [u32; 2],
-  [i32; 3], [u32; 3],
-  [i32; 4], [u32; 4],
+  ([i32; 2], [u32; 2]),
+  ([i32; 3], [u32; 3]),
+  ([i32; 4], [u32; 4]),
 
-  u32, [u32; 2],
-  u32, [u32; 3],
-  u32, [u32; 4],
+  (u32, [u32; 2]),
+  (u32, [u32; 3]),
+  (u32, [u32; 4]),
 
-  i32, [u32; 2],
-  i32, [u32; 3],
-  i32, [u32; 4]
+  (i32, [u32; 2]),
+  (i32, [u32; 3]),
+  (i32, [u32; 4])
 );
 
 // Methods available on struct-type expressions.

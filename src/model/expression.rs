@@ -15,6 +15,7 @@ pub(crate) enum ExpressionModel {
   BufferRead(BufferReadExprModel),
   StructFieldRead(StructFieldReadModel),
   FunctionCall(FunctionCallExprModel),
+  VecConstructor(VecConstructorExprModel),
 }
 impl ExpressionModel {
   /** Collect struct data types reference by this buffer into a vector. */
@@ -46,6 +47,12 @@ impl ExpressionModel {
         collector.add_data_type(function_call.return_data_type().clone());
         for arg in function_call.arguments() {
           arg.as_ref().collect_struct_data_types_into(collector);
+        }
+      },
+      ExpressionModel::VecConstructor(vec_constructor) => {
+        collector.add_data_type(vec_constructor.data_type().clone());
+        for component in vec_constructor.components() {
+          component.collect_struct_data_types_into(collector);
         }
       },
     }
@@ -340,5 +347,45 @@ impl FunctionCallExprModel {
   /** Get the return data type of the function. */
   pub(crate) fn return_data_type(&self) -> &DataTypeRepr {
     &self.return_data_type
+  }
+}
+
+/**
+ * Represents a vector-constructor expression.
+ */
+#[derive(Clone, Debug)]
+pub(crate) struct VecConstructorExprModel {
+  // The dimensions of the vector.
+  _dimensions: u32,
+
+  // The data type of the vector.
+  data_type: DataTypeRepr,
+
+  // The components of the vector.
+  components: Vec<Box<ExpressionModel>>,
+}
+impl VecConstructorExprModel {
+  /** Create a new vector-constructor expression. */
+  pub(crate) fn new(
+    dimensions: u32,
+    data_type: DataTypeRepr,
+    components: Vec<Box<ExpressionModel>>,
+  ) -> Self {
+    VecConstructorExprModel { _dimensions: dimensions, data_type, components }
+  }
+
+  /** Get the dimensions of the vector. */
+  pub(crate) fn _dimensions(&self) -> u32 {
+    self._dimensions
+  }
+
+  /** Get the data type of the vector. */
+  pub(crate) fn data_type(&self) -> &DataTypeRepr {
+    &self.data_type
+  }
+
+  /** Get the components of the vector. */
+  pub(crate) fn components(&self) -> &[Box<ExpressionModel>] {
+    &self.components
   }
 }

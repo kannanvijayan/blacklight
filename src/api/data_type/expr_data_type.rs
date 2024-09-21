@@ -108,48 +108,58 @@ impl ExprNumericDataType for [f32; 4] {}
 /**
  * Expr data types that are scalar.
  */
-pub trait ExprScalarDataType: ExprNumericDataType {
+pub trait ExprScalarNumericDataType: ExprNumericDataType {
 }
 
-impl ExprScalarDataType for i32 {}
-impl ExprScalarDataType for u32 {}
-impl ExprScalarDataType for f32 {}
+impl ExprScalarNumericDataType for i32 {}
+impl ExprScalarNumericDataType for u32 {}
+impl ExprScalarNumericDataType for f32 {}
 
 /**
  * Expr data types that are numeric in nature (i.e. are field data types).
  */
-pub trait ExprVectorDataType: ExprNumericDataType {
-  type Scalar: ExprScalarDataType;
+pub trait ExprVectorNumericDataType: ExprNumericDataType {
+  type Scalar: ExprScalarNumericDataType;
+  const DIMS: u32;
 }
 
-impl ExprVectorDataType for [i32; 2] {
+impl ExprVectorNumericDataType for [i32; 2] {
   type Scalar = i32;
+  const DIMS: u32 = 2;
 }
-impl ExprVectorDataType for [i32; 3] {
+impl ExprVectorNumericDataType for [i32; 3] {
   type Scalar = i32;
+  const DIMS: u32 = 3;
 }
-impl ExprVectorDataType for [i32; 4] {
+impl ExprVectorNumericDataType for [i32; 4] {
   type Scalar = i32;
+  const DIMS: u32 = 4;
 }
 
-impl ExprVectorDataType for [u32; 2] {
+impl ExprVectorNumericDataType for [u32; 2] {
   type Scalar = u32;
+  const DIMS: u32 = 2;
 }
-impl ExprVectorDataType for [u32; 3] {
+impl ExprVectorNumericDataType for [u32; 3] {
   type Scalar = u32;
+  const DIMS: u32 = 3;
 }
-impl ExprVectorDataType for [u32; 4] {
+impl ExprVectorNumericDataType for [u32; 4] {
   type Scalar = u32;
+  const DIMS: u32 = 4;
 }
 
-impl ExprVectorDataType for [f32; 2] {
+impl ExprVectorNumericDataType for [f32; 2] {
   type Scalar = f32;
+  const DIMS: u32 = 2;
 }
-impl ExprVectorDataType for [f32; 3] {
+impl ExprVectorNumericDataType for [f32; 3] {
   type Scalar = f32;
+  const DIMS: u32 = 3;
 }
-impl ExprVectorDataType for [f32; 4] {
+impl ExprVectorNumericDataType for [f32; 4] {
   type Scalar = f32;
+  const DIMS: u32 = 4;
 }
 
 /**

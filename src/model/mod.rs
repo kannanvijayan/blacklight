@@ -26,6 +26,7 @@ pub(crate) use self::{
     IdentifierExprModel,
     LiteralExprModel,
     StructFieldReadModel,
+    VecConstructorExprModel,
   },
   function::FunctionModel,
   identifier::IdentifierModel,

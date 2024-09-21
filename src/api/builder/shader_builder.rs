@@ -17,7 +17,13 @@ use crate::{
       StructMappedDataType,
       ProcResultType,
     },
-    handle::{ BufferBindingHandle, ExprHandle, FunctionHandle },
+    handle::{
+      BufferBindingHandle,
+      ExprHandle,
+      FunctionHandle,
+      VariableBindingHandle,
+    },
+    variable_attributes::VariableRead,
     EntryPoint,
     Project,
     Shader,
@@ -82,18 +88,20 @@ impl<'sh, 'pr: 'sh, UDT> ShaderBuilder<'sh, 'pr, UDT>
 
   /** Define a new constant. */
   pub fn define_constant<DT>(&mut self, name: &'static str, value: DT)
+    -> VariableBindingHandle<'sh, DT, VariableRead>
     where DT: LiteralDataType
   {
     let identifier_model = IdentifierModel::new(name);
     let literal_value = value.to_literal_data_value();
     let literal_expr_model = LiteralExprModel::new(literal_value);
     let const_definition_model = VariableBindingModel::new(
-      identifier_model,
+      identifier_model.clone(),
       VariableBindingDisposition::Const,
       DT::repr(),
       Some(Box::new(ExpressionModel::Literal(literal_expr_model)))
     );
     self.const_definitions.push(const_definition_model);
+    VariableBindingHandle::new(identifier_model)
   }
 
   /** Define a new shader function. */
